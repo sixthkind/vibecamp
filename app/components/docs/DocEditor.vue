@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="handleClose" :initial-breakpoint="1" :breakpoints="[0, 1]">
+  <ion-modal :is-open="isOpen" @didDismiss="handleDismiss" :initial-breakpoint="1" :breakpoints="[0, 1]">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ item ? 'Edit Document' : 'New Document' }}</ion-title>
@@ -12,7 +12,7 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div class="max-w-4xl mx-auto py-6">
+      <div class="max-w-4xl mx-auto p-6">
         <!-- Title Input -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -168,6 +168,7 @@ async function handleClose() {
           text: 'Discard',
           role: 'destructive',
           handler: () => {
+            hasUnsavedChanges.value = false;
             emit('close');
           },
         },
@@ -177,6 +178,12 @@ async function handleClose() {
   } else {
     emit('close');
   }
+}
+
+function handleDismiss() {
+  // Modal was dismissed (e.g., by swiping down or after save)
+  // Don't show confirmation, just emit close
+  emit('close');
 }
 
 async function handleSave() {

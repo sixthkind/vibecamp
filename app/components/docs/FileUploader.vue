@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="handleClose" :initial-breakpoint="0.9" :breakpoints="[0, 0.9]">
+  <ion-modal :is-open="isOpen" @didDismiss="handleDismiss" :initial-breakpoint="0.9" :breakpoints="[0, 0.9]">
     <ion-header>
       <ion-toolbar>
         <ion-title>Upload Files</ion-title>
@@ -12,7 +12,7 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div class="max-w-3xl mx-auto py-6">
+      <div class="max-w-3xl mx-auto p-6">
         <!-- Upload Area -->
         <div
           @drop.prevent="handleDrop"
@@ -185,12 +185,17 @@ function handleDrop(event: DragEvent) {
   }
 }
 
-function addFiles(files: File[]) {
-  files.forEach(file => {
+async function addFiles(files: File[]) {
+  for (const file of files) {
     // Check file size (20MB limit)
     if (file.size > 20 * 1024 * 1024) {
-      alert(`File ${file.name} is too large. Max size is 20MB.`);
-      return;
+      const alert = await alertController.create({
+        header: 'File Too Large',
+        message: `File ${file.name} is too large. Max size is 20MB.`,
+        buttons: ['OK'],
+      });
+      await alert.present();
+      continue;
     }
 
     const fileItem: FileItem = {
@@ -210,7 +215,7 @@ function addFiles(files: File[]) {
     }
 
     selectedFiles.value.push(fileItem);
-  });
+  }
 }
 
 function removeFile(index: number) {
@@ -290,6 +295,7 @@ function handleClose() {
           text: 'Discard',
           role: 'destructive',
           handler: () => {
+            clearFiles();
             emit('close');
           },
         },
@@ -298,6 +304,12 @@ function handleClose() {
   } else {
     emit('close');
   }
+}
+
+function handleDismiss() {
+  // Modal was dismissed (e.g., by swiping down or after upload)
+  // Don't show confirmation, just emit close
+  emit('close');
 }
 
 function getFileIcon(file: File) {

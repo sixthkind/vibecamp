@@ -120,18 +120,20 @@
               v-for="folder in displayedFolders"
               :key="folder.id"
               @click="navigateToFolder(folder.id)"
-              class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group"
+              class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative"
             >
               <div class="flex flex-col items-center text-center">
                 <Icon name="lucide:folder" size="48px" class="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />
                 <h3 class="text-sm font-semibold text-gray-900 truncate w-full">{{ folder.name }}</h3>
               </div>
-              <div class="mt-2 flex justify-center">
+              
+              <!-- Actions Menu -->
+              <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   @click.stop="openFolderMenu(folder)"
-                  class="text-gray-400 hover:text-gray-600 p-1"
+                  class="bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors"
                 >
-                  <Icon name="lucide:more-vertical" size="16px" />
+                  <Icon name="lucide:more-vertical" size="16px" class="text-gray-600" />
                 </button>
               </div>
             </div>
@@ -179,6 +181,14 @@
       @close="closeFolderManager"
       @saved="handleFolderSaved"
     />
+
+    <MoveItemModal
+      :is-open="isMoveModalOpen"
+      :item="movingItem"
+      :folders="folders"
+      @close="closeMoveModal"
+      @moved="handleItemMoved"
+    />
   </div>
 </template>
 
@@ -191,6 +201,7 @@ import DocItem from './DocItem.vue';
 import DocEditor from './DocEditor.vue';
 import FileUploader from './FileUploader.vue';
 import FolderManager from './FolderManager.vue';
+import MoveItemModal from './MoveItemModal.vue';
 
 interface DocsItem {
   id: string;
@@ -236,8 +247,10 @@ const filterType = ref<'all' | 'document' | 'file'>('all');
 const isEditorOpen = ref(false);
 const isUploaderOpen = ref(false);
 const isFolderManagerOpen = ref(false);
+const isMoveModalOpen = ref(false);
 const editingItem = ref<DocsItem | null>(null);
 const managingFolder = ref<DocsFolder | null>(null);
+const movingItem = ref<DocsItem | null>(null);
 
 // Computed
 const displayedFolders = computed(() => {
@@ -291,7 +304,6 @@ async function loadData() {
       sort: 'position,name',
     });
     folders.value = foldersData;
-    console.log('Loaded folders:', foldersData.length, foldersData);
 
     // Load items
     const itemsData = await pb.collection('docs_items').getFullList<DocsItem>({
@@ -300,10 +312,14 @@ async function loadData() {
       expand: 'created_by',
     });
     items.value = itemsData;
-    console.log('Loaded items:', itemsData.length, itemsData);
   } catch (error) {
     console.error('Error loading docs & files:', error);
-    alert('Failed to load docs & files');
+    const errorAlert = await alertController.create({
+      header: 'Error',
+      message: 'Failed to load docs & files',
+      buttons: ['OK'],
+    });
+    await errorAlert.present();
   } finally {
     isLoading.value = false;
   }
@@ -338,8 +354,8 @@ function openEditModal(item: DocsItem) {
 }
 
 function openMoveModal(item: DocsItem) {
-  // TODO: Implement move modal
-  alert('Move functionality coming soon!');
+  movingItem.value = item;
+  isMoveModalOpen.value = true;
 }
 
 function openFolderMenu(folder: DocsFolder) {
@@ -365,7 +381,12 @@ async function confirmDeleteItem(item: DocsItem) {
             items.value = items.value.filter(i => i.id !== item.id);
           } catch (error) {
             console.error('Error deleting item:', error);
-            alert('Failed to delete item');
+            const errorAlert = await alertController.create({
+              header: 'Error',
+              message: 'Failed to delete item',
+              buttons: ['OK'],
+            });
+            await errorAlert.present();
           }
         },
       },
@@ -388,6 +409,11 @@ function closeFolderManager() {
   managingFolder.value = null;
 }
 
+function closeMoveModal() {
+  isMoveModalOpen.value = false;
+  movingItem.value = null;
+}
+
 async function handleSave() {
   closeEditor();
   await loadData();
@@ -400,6 +426,11 @@ async function handleUploaded() {
 
 async function handleFolderSaved() {
   closeFolderManager();
+  await loadData();
+}
+
+async function handleItemMoved() {
+  closeMoveModal();
   await loadData();
 }
 

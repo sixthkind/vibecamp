@@ -12,7 +12,7 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div class="max-w-2xl mx-auto py-6">
+      <div class="max-w-2xl mx-auto p-6">
         <!-- Folder Name Input -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
