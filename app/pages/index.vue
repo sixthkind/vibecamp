@@ -11,20 +11,13 @@ const outpost = ref<any>(null);
 const projects = ref<any[]>([]);
 const loading = ref(true);
 const canCreateProject = ref(false);
-const statusFilter = ref<string>('active'); // Default to active projects
-
-const statusOptions = [
-  { value: 'active', label: 'Active' },
-  { value: 'all', label: 'All Projects' },
-  { value: 'archived', label: 'Archived' },
-  { value: 'completed', label: 'Completed' },
-];
+const showArchived = ref(false);
 
 const filteredProjects = computed(() => {
-  if (statusFilter.value === 'all') {
-    return projects.value;
+  if (showArchived.value) {
+    return projects.value.filter(p => p.status === 'archived');
   }
-  return projects.value.filter(p => p.status === statusFilter.value);
+  return projects.value.filter(p => p.status === 'active');
 });
 
 async function loadData() {
@@ -56,8 +49,6 @@ function getStatusColor(status: string) {
       return 'bg-green-100 text-green-800';
     case 'archived':
       return 'bg-gray-100 text-gray-800';
-    case 'completed':
-      return 'bg-blue-100 text-blue-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -131,22 +122,6 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Status Filter -->
-              <div class="flex gap-2 flex-wrap">
-                <button
-                  v-for="option in statusOptions"
-                  :key="option.value"
-                  @click="statusFilter = option.value"
-                  :class="[
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                    statusFilter === option.value
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  ]"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
             </div>
 
             <!-- Loading State -->
@@ -178,7 +153,7 @@ onMounted(() => {
 
             <!-- No Filtered Projects -->
             <div v-else-if="filteredProjects.length === 0" class="text-center py-12">
-              <p class="text-gray-600">No {{ statusFilter }} projects found.</p>
+              <p class="text-gray-600">No {{ showArchived ? 'archived' : 'active' }} projects found.</p>
             </div>
 
             <!-- Projects Grid -->
@@ -247,8 +222,8 @@ onMounted(() => {
             </div>
 
             <!-- Quick Actions Footer -->
-            <div v-if="filteredProjects.length > 0" class="mt-12 pt-8 border-t border-gray-200">
-              <div class="flex justify-center gap-4">
+            <div v-if="filteredProjects.length > 0 || (projects.length > 0 && showArchived)" class="mt-12 pt-8 border-t border-gray-200">
+              <div class="flex flex-col items-center gap-4">
                 <NuxtLink 
                   v-if="outpost"
                   :to="`/${outpost.id}/members`"
@@ -257,6 +232,19 @@ onMounted(() => {
                     Manage Team
                   </button>
                 </NuxtLink>
+                
+                <!-- Show Archived Toggle -->
+                <button
+                  @click="showArchived = !showArchived"
+                  :class="[
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    showArchived 
+                      ? 'bg-gray-200 text-gray-900' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  ]"
+                >
+                  Archived Projects
+                </button>
               </div>
             </div>
           </div>

@@ -24,7 +24,6 @@ const canCreate = ref(false);
 const statusOptions = [
   { value: 'active', label: 'Active' },
   { value: 'archived', label: 'Archived' },
-  { value: 'completed', label: 'Completed' },
 ];
 
 async function loadOutpost() {

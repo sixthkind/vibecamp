@@ -14,20 +14,13 @@ const projects = ref<any[]>([]);
 const outpost = ref<any>(null);
 const loading = ref(true);
 const canCreateProject = ref(false);
-const statusFilter = ref<string>('all');
-
-const statusOptions = [
-  { value: 'all', label: 'All Projects' },
-  { value: 'active', label: 'Active' },
-  { value: 'archived', label: 'Archived' },
-  { value: 'completed', label: 'Completed' },
-];
+const showArchived = ref(false);
 
 const filteredProjects = computed(() => {
-  if (statusFilter.value === 'all') {
-    return projects.value;
+  if (showArchived.value) {
+    return projects.value.filter(p => p.status === 'archived');
   }
-  return projects.value.filter(p => p.status === statusFilter.value);
+  return projects.value.filter(p => p.status === 'active');
 });
 
 async function loadData() {
@@ -55,8 +48,6 @@ function getStatusColor(status: string) {
       return 'bg-green-100 text-green-800';
     case 'archived':
       return 'bg-gray-100 text-gray-800';
-    case 'completed':
-      return 'bg-blue-100 text-blue-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -97,22 +88,6 @@ function getProjectImage(project: any) {
               </NuxtLink>
             </div>
 
-            <!-- Status Filter -->
-            <div class="flex gap-2 flex-wrap">
-              <button
-                v-for="option in statusOptions"
-                :key="option.value"
-                @click="statusFilter = option.value"
-                :class="[
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  statusFilter === option.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                ]"
-              >
-                {{ option.label }}
-              </button>
-            </div>
           </div>
 
           <div v-if="loading" class="text-center py-12">
@@ -133,7 +108,7 @@ function getProjectImage(project: any) {
           </div>
 
           <div v-else-if="filteredProjects.length === 0" class="text-center py-12">
-            <p class="text-gray-600">No {{ statusFilter }} projects found.</p>
+            <p class="text-gray-600">No {{ showArchived ? 'archived' : 'active' }} projects found.</p>
           </div>
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -198,6 +173,23 @@ function getProjectImage(project: any) {
                 </div>
               </div>
             </NuxtLink>
+          </div>
+          
+          <!-- Show Archived Toggle -->
+          <div v-if="projects.length > 0" class="mt-12 pt-8 border-t border-gray-200">
+            <div class="flex justify-center">
+              <button
+                @click="showArchived = !showArchived"
+                :class="[
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  showArchived 
+                    ? 'bg-gray-200 text-gray-900' 
+                    : 'text-gray-600 hover:text-gray-900'
+                ]"
+              >
+                Archived Projects
+              </button>
+            </div>
           </div>
         </div>
       </CommonContainer>

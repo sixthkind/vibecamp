@@ -94,7 +94,7 @@
             v-if="canManage" 
             @click="toggleEditMode" 
             :class="[
-              'px-3 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2',
+              'h-10 px-3 rounded-lg transition-colors text-sm font-medium flex items-center gap-2',
               editMode 
                 ? 'bg-blue-600 text-white' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -107,7 +107,7 @@
           <!-- File Attachment Button -->
           <button 
             @click="triggerFileUpload" 
-            class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50" 
+            class="h-10 px-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center justify-center" 
             :disabled="isSending" 
             title="Attach file"
           >
@@ -130,7 +130,7 @@
             @keyup.enter="sendMessage"
             type="text"
             placeholder="Type a message..."
-            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+            class="flex-1 h-10 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
             ref="messageInput"
             :disabled="isSending"
           />
@@ -138,11 +138,11 @@
           <!-- Send Button -->
           <button 
             @click="sendMessage" 
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]" 
+            class="h-10 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]" 
             :disabled="(!newMessage.trim() && selectedFiles.length === 0) || isSending"
           >
             <ion-spinner v-if="isSending" name="crescent"></ion-spinner>
-            <Icon v-else name="lucide:send" size="20px" />
+            <Icon v-else name="lucide:arrow-right" size="20px" />
           </button>
         </div>
       </div>
