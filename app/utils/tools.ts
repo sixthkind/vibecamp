@@ -154,7 +154,7 @@ export async function canUserManageTool(projectId: string): Promise<boolean> {
 export function getToolIcon(toolType: string): string {
   const icons: Record<string, string> = {
     chat: 'lucide:message-square',
-    docs: 'lucide:file-text',
+    docs: 'lucide:folder-open',
     tasks: 'lucide:check-square',
     schedule: 'lucide:calendar',
     files: 'lucide:folder',
@@ -169,7 +169,7 @@ export function getToolIcon(toolType: string): string {
 export function getToolDescription(toolType: string): string {
   const descriptions: Record<string, string> = {
     chat: 'Real-time group chat for project communication',
-    docs: 'Shared documents and wikis',
+    docs: 'Shared documents and file storage',
     tasks: 'Task lists and to-do items',
     schedule: 'Events, deadlines, and milestones',
     files: 'File storage and sharing',

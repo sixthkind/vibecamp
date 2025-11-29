@@ -27,6 +27,12 @@ export default defineNuxtConfig({
     "@fontsource/quicksand/700.css"
   ],
 
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => tag.startsWith('trix-')
+    }
+  },
+
   postcss: {
     plugins: {
       tailwindcss: {},
