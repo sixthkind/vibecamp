@@ -1,14 +1,7 @@
 import { pb } from './pb';
 
-// Role hierarchy levels (higher = more permissions)
-const ROLE_HIERARCHY = {
-  owner: 4,
-  admin: 3,
-  member: 2,
-  viewer: 1,
-} as const;
-
-export type Role = keyof typeof ROLE_HIERARCHY;
+// Simplified role system - only owner and member
+export type Role = 'owner' | 'member';
 
 // Actions that can be performed
 export type Action = 
@@ -31,26 +24,26 @@ export type ProjectAction =
   | 'archive'
   | 'delete_project';
 
-// Permission matrix: minimum role required for each action
+// Permission matrix: only owner can manage members and settings
 const PERMISSION_MATRIX: Record<Action, Role> = {
-  view: 'viewer',
+  view: 'member',
   create: 'member',
   edit: 'member',
   delete: 'member',
-  manage_members: 'admin',
-  manage_settings: 'admin',
+  manage_members: 'owner',
+  manage_settings: 'owner',
   delete_outpost: 'owner',
 };
 
 // Project permission matrix
 const PROJECT_PERMISSION_MATRIX: Record<ProjectAction, Role> = {
-  view: 'viewer',
+  view: 'member',
   create: 'member',
   edit: 'member',
   delete: 'member',
-  manage_members: 'admin',
-  manage_settings: 'admin',
-  archive: 'admin',
+  manage_members: 'owner',
+  manage_settings: 'owner',
+  archive: 'owner',
   delete_project: 'owner',
 };
 
@@ -62,42 +55,16 @@ export async function getUserOutposts() {
   if (!userId) return [];
 
   try {
-    // Get memberships for the user
-    const memberships = await pb.collection('memberships').getFullList({
-      filter: `user = "${userId}"`,
-      expand: 'outpost',
+    // Get outposts where user is owner or member
+    const outposts = await pb.collection('outposts').getFullList({
+      filter: `owner = "${userId}" || members.id ?= "${userId}"`,
       sort: '-created',
     });
 
-    // Get outposts where user is owner (might not have membership yet)
-    const ownedOutposts = await pb.collection('outposts').getFullList({
-      filter: `owner = "${userId}"`,
-      sort: '-created',
-    });
-
-    // Combine and deduplicate
-    const outpostMap = new Map();
-    
-    // Add owned outposts
-    ownedOutposts.forEach(outpost => {
-      outpostMap.set(outpost.id, {
-        ...outpost,
-        userRole: 'owner' as Role,
-      });
-    });
-
-    // Add memberships (will override if owner, but that's fine)
-    memberships.forEach(membership => {
-      const outpost = membership.expand?.outpost;
-      if (outpost) {
-        outpostMap.set(outpost.id, {
-          ...outpost,
-          userRole: membership.role as Role,
-        });
-      }
-    });
-
-    return Array.from(outpostMap.values());
+    return outposts.map(outpost => ({
+      ...outpost,
+      userRole: outpost.owner === userId ? 'owner' : 'member' as Role,
+    }));
   } catch (error) {
     console.error('Error fetching user outposts:', error);
     return [];
@@ -120,7 +87,9 @@ export async function getCurrentOutpost() {
   if (!outpostId) return null;
 
   try {
-    const outpost = await pb.collection('outposts').getOne(outpostId);
+    const outpost = await pb.collection('outposts').getOne(outpostId, {
+      expand: 'members',
+    });
     const role = await getUserRole(outpostId);
     return {
       ...outpost,
@@ -161,20 +130,16 @@ export async function getUserRole(outpostId: string): Promise<Role | null> {
   if (!userId) return null;
 
   try {
-    // Check if user is the owner
     const outpost = await pb.collection('outposts').getOne(outpostId);
+    
+    // Check if user is the owner
     if (outpost.owner === userId) {
       return 'owner';
     }
 
-    // Check membership
-    const memberships = await pb.collection('memberships').getFullList({
-      filter: `user = "${userId}" && outpost = "${outpostId}"`,
-      limit: 1,
-    });
-
-    if (memberships.length > 0) {
-      return memberships[0].role as Role;
+    // Check if user is in members array
+    if (outpost.members && outpost.members.includes(userId)) {
+      return 'member';
     }
 
     return null;
@@ -202,35 +167,87 @@ export async function canUserPerform(
   if (!userRole) return false;
 
   const requiredRole = PERMISSION_MATRIX[action];
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
+  // Owner can do everything, members can do member-level actions
+  return userRole === 'owner' || requiredRole === 'member';
 }
 
 /**
  * Check if a role has sufficient permissions compared to another role
- * Useful for validating if a user can modify another user's role
+ * In simplified system, owner always has higher role than member
  */
 export function hasHigherRole(role1: Role, role2: Role): boolean {
-  return ROLE_HIERARCHY[role1] > ROLE_HIERARCHY[role2];
+  return role1 === 'owner' && role2 === 'member';
 }
 
 /**
- * Get all members of an outpost (requires admin or owner)
+ * Get all members of an outpost (requires owner)
  */
 export async function getOutpostMembers(outpostId: string) {
   try {
-    const memberships = await pb.collection('memberships').getFullList({
-      filter: `outpost = "${outpostId}"`,
-      expand: 'user',
-      sort: '-created',
+    const outpost = await pb.collection('outposts').getOne(outpostId, {
+      expand: 'members,owner',
     });
 
-    return memberships.map(membership => ({
-      id: membership.id,
-      userId: membership.user,
-      role: membership.role as Role,
-      created: membership.created,
-      user: membership.expand?.user,
-    }));
+    const members = [];
+    
+    // Add owner first
+    if (outpost.expand?.owner) {
+      members.push({
+        id: outpost.owner,
+        userId: outpost.owner,
+        role: 'owner' as Role,
+        created: outpost.created,
+        user: outpost.expand.owner,
+      });
+    } else {
+      // Fallback: fetch owner manually
+      try {
+        const ownerUser = await pb.collection('users').getOne(outpost.owner);
+        members.push({
+          id: outpost.owner,
+          userId: outpost.owner,
+          role: 'owner' as Role,
+          created: outpost.created,
+          user: ownerUser,
+        });
+      } catch (err) {
+        console.error('Failed to fetch owner:', err);
+      }
+    }
+
+    // Add members
+    if (outpost.members && Array.isArray(outpost.members) && outpost.members.length > 0) {
+      // Check if we have expanded members
+      if (outpost.expand?.members && Array.isArray(outpost.expand.members)) {
+        outpost.expand.members.forEach((user: any) => {
+          members.push({
+            id: user.id,
+            userId: user.id,
+            role: 'member' as Role,
+            created: user.created || outpost.created,
+            user: user,
+          });
+        });
+      } else {
+        // Fallback: fetch members manually
+        for (const memberId of outpost.members) {
+          try {
+            const memberUser = await pb.collection('users').getOne(memberId);
+            members.push({
+              id: memberUser.id,
+              userId: memberUser.id,
+              role: 'member' as Role,
+              created: memberUser.created || outpost.created,
+              user: memberUser,
+            });
+          } catch (err) {
+            console.error('Failed to fetch member:', memberId, err);
+          }
+        }
+      }
+    }
+
+    return members;
   } catch (error) {
     console.error('Error fetching outpost members:', error);
     return [];
@@ -238,69 +255,70 @@ export async function getOutpostMembers(outpostId: string) {
 }
 
 /**
- * Create a new membership (invite user to outpost)
+ * Add a member to an outpost (owner only)
  */
-export async function createMembership(
+export async function addMember(
   outpostId: string,
-  userId: string,
-  role: Role
+  userId: string
 ) {
-  // Check if current user has permission
-  const canManage = await canUserPerform('manage_members', outpostId);
-  if (!canManage) {
-    throw new Error('Insufficient permissions to manage members');
+  // Check if current user is owner
+  const userRole = await getUserRole(outpostId);
+  if (userRole !== 'owner') {
+    throw new Error('Only the owner can add members');
   }
 
   try {
-    return await pb.collection('memberships').create({
-      outpost: outpostId,
-      user: userId,
-      role,
-    });
-  } catch (error: any) {
-    if (error.data?.data?.outpost?.message?.includes('unique')) {
+    // Get current outpost
+    const outpost = await pb.collection('outposts').getOne(outpostId);
+    
+    // Check if user is already a member or owner
+    if (outpost.owner === userId) {
+      throw new Error('User is already the owner of this outpost');
+    }
+    
+    const currentMembers = outpost.members || [];
+    if (currentMembers.includes(userId)) {
       throw new Error('User is already a member of this outpost');
     }
-    throw error;
-  }
-}
 
-/**
- * Update a user's role in an outpost
- */
-export async function updateMemberRole(
-  membershipId: string,
-  newRole: Role,
-  outpostId: string
-) {
-  // Check if current user has permission
-  const canManage = await canUserPerform('manage_members', outpostId);
-  if (!canManage) {
-    throw new Error('Insufficient permissions to manage members');
-  }
-
-  try {
-    return await pb.collection('memberships').update(membershipId, {
-      role: newRole,
+    // Add user to members array
+    const updatedMembers = [...currentMembers, userId];
+    
+    return await pb.collection('outposts').update(outpostId, {
+      members: updatedMembers,
     });
-  } catch (error) {
-    console.error('Error updating member role:', error);
+  } catch (error: any) {
+    console.error('Error adding member:', error);
     throw error;
   }
 }
 
 /**
- * Remove a member from an outpost
+ * Remove a member from an outpost (owner only)
  */
-export async function removeMember(membershipId: string, outpostId: string) {
-  // Check if current user has permission
-  const canManage = await canUserPerform('manage_members', outpostId);
-  if (!canManage) {
-    throw new Error('Insufficient permissions to manage members');
+export async function removeMember(userId: string, outpostId: string) {
+  // Check if current user is owner
+  const userRole = await getUserRole(outpostId);
+  if (userRole !== 'owner') {
+    throw new Error('Only the owner can remove members');
   }
 
   try {
-    await pb.collection('memberships').delete(membershipId);
+    // Get current outpost
+    const outpost = await pb.collection('outposts').getOne(outpostId);
+    
+    // Can't remove the owner
+    if (outpost.owner === userId) {
+      throw new Error('Cannot remove the owner from the outpost');
+    }
+
+    // Remove user from members array
+    const currentMembers = outpost.members || [];
+    const updatedMembers = currentMembers.filter((id: string) => id !== userId);
+    
+    await pb.collection('outposts').update(outpostId, {
+      members: updatedMembers,
+    });
   } catch (error) {
     console.error('Error removing member:', error);
     throw error;
@@ -348,24 +366,18 @@ export async function getUserProjects(outpostId: string) {
 
   try {
     // Get all projects in the outpost that the user has access to
-    // This will automatically filter based on the collection's listRule
     const projects = await pb.collection('projects').getFullList({
       filter: `outpost = "${outpostId}"`,
       sort: '-created',
     });
 
-    // For each project, get the user's role
-    const projectsWithRoles = await Promise.all(
-      projects.map(async (project) => {
-        const role = await getProjectRole(project.id);
-        return {
-          ...project,
-          userRole: role,
-        };
-      })
-    );
-
-    return projectsWithRoles;
+    // For each project, get the user's role (based on outpost role)
+    const role = await getUserRole(outpostId);
+    
+    return projects.map(project => ({
+      ...project,
+      userRole: role,
+    }));
   } catch (error) {
     console.error('Error fetching user projects:', error);
     return [];
@@ -374,7 +386,7 @@ export async function getUserProjects(outpostId: string) {
 
 /**
  * Get the user's role in a specific project
- * Considers both project membership and outpost membership
+ * In simplified system, project permissions inherit from outpost
  */
 export async function getProjectRole(projectId: string): Promise<Role | null> {
   const userId = pb.authStore.record?.id;
@@ -386,42 +398,11 @@ export async function getProjectRole(projectId: string): Promise<Role | null> {
       expand: 'outpost',
     });
 
-    // Check if user is the outpost owner
     const outpost = project.expand?.outpost;
-    if (outpost && outpost.owner === userId) {
-      return 'owner';
-    }
+    if (!outpost) return null;
 
-    // Check if user is an outpost admin
-    const outpostMemberships = await pb.collection('memberships').getFullList({
-      filter: `user = "${userId}" && outpost = "${outpost.id}"`,
-      limit: 1,
-    });
-
-    if (outpostMemberships.length > 0) {
-      const outpostRole = outpostMemberships[0].role as Role;
-      // Outpost admins and owners have admin rights in all projects
-      if (ROLE_HIERARCHY[outpostRole] >= ROLE_HIERARCHY.admin) {
-        return outpostRole;
-      }
-    }
-
-    // Check project membership
-    const projectMemberships = await pb.collection('project_memberships').getFullList({
-      filter: `user = "${userId}" && project = "${projectId}"`,
-      limit: 1,
-    });
-
-    if (projectMemberships.length > 0) {
-      return projectMemberships[0].role as Role;
-    }
-
-    // If user is an outpost member but not project member, they can view
-    if (outpostMemberships.length > 0) {
-      return outpostMemberships[0].role as Role;
-    }
-
-    return null;
+    // Return the user's role in the outpost
+    return await getUserRole(outpost.id);
   } catch (error) {
     console.error('Error fetching project role:', error);
     return null;
@@ -442,27 +423,17 @@ export async function canUserPerformOnProject(
   if (!userRole) return false;
 
   const requiredRole = PROJECT_PERMISSION_MATRIX[action];
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
+  // Owner can do everything, members can do member-level actions
+  return userRole === 'owner' || requiredRole === 'member';
 }
 
 /**
- * Get all members of a project
+ * Get all members of a project (same as outpost members)
  */
 export async function getProjectMembers(projectId: string) {
   try {
-    const memberships = await pb.collection('project_memberships').getFullList({
-      filter: `project = "${projectId}"`,
-      expand: 'user',
-      sort: '-created',
-    });
-
-    return memberships.map(membership => ({
-      id: membership.id,
-      userId: membership.user,
-      role: membership.role as Role,
-      created: membership.created,
-      user: membership.expand?.user,
-    }));
+    const project = await pb.collection('projects').getOne(projectId);
+    return await getOutpostMembers(project.outpost);
   } catch (error) {
     console.error('Error fetching project members:', error);
     return [];
@@ -470,72 +441,47 @@ export async function getProjectMembers(projectId: string) {
 }
 
 /**
- * Create a new project membership
+ * Create a new project membership (owner only)
+ * Note: In simplified system, this adds them to the outpost
  */
 export async function createProjectMembership(
   projectId: string,
   userId: string,
   role: Role
 ) {
-  // Check if current user has permission
-  const canManage = await canUserPerformOnProject('manage_members', projectId);
-  if (!canManage) {
-    throw new Error('Insufficient permissions to manage project members');
-  }
-
   try {
-    return await pb.collection('project_memberships').create({
-      project: projectId,
-      user: userId,
-      role,
-    });
+    const project = await pb.collection('projects').getOne(projectId);
+    return await addMember(project.outpost, userId);
   } catch (error: any) {
-    if (error.data?.data?.project?.message?.includes('unique')) {
-      throw new Error('User is already a member of this project');
-    }
+    console.error('Error adding project member:', error);
     throw error;
   }
 }
 
 /**
- * Update a project member's role
+ * Remove a member from a project (owner only)
+ * Note: In simplified system, this removes them from the outpost
  */
-export async function updateProjectMemberRole(
-  membershipId: string,
-  newRole: Role,
-  projectId: string
-) {
-  // Check if current user has permission
-  const canManage = await canUserPerformOnProject('manage_members', projectId);
-  if (!canManage) {
-    throw new Error('Insufficient permissions to manage project members');
-  }
-
+export async function removeProjectMember(userId: string, projectId: string) {
   try {
-    return await pb.collection('project_memberships').update(membershipId, {
-      role: newRole,
-    });
-  } catch (error) {
-    console.error('Error updating project member role:', error);
-    throw error;
-  }
-}
-
-/**
- * Remove a member from a project
- */
-export async function removeProjectMember(membershipId: string, projectId: string) {
-  // Check if current user has permission
-  const canManage = await canUserPerformOnProject('manage_members', projectId);
-  if (!canManage) {
-    throw new Error('Insufficient permissions to manage project members');
-  }
-
-  try {
-    await pb.collection('project_memberships').delete(membershipId);
+    const project = await pb.collection('projects').getOne(projectId);
+    return await removeMember(userId, project.outpost);
   } catch (error) {
     console.error('Error removing project member:', error);
     throw error;
   }
 }
 
+// Legacy functions for backwards compatibility
+export function updateMemberRole(membershipId: string, newRole: Role, outpostId: string) {
+  throw new Error('Role updates are no longer supported. Only owner and member roles exist.');
+}
+
+export function updateProjectMemberRole(membershipId: string, newRole: Role, projectId: string) {
+  throw new Error('Role updates are no longer supported. Only owner and member roles exist.');
+}
+
+// Deprecated - kept for backwards compatibility
+export function createMembership(outpostId: string, userId: string, role: Role) {
+  return addMember(outpostId, userId);
+}

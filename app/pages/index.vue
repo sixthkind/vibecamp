@@ -128,14 +128,6 @@ onMounted(() => {
                       + New Project
                     </button>
                   </NuxtLink>
-                  <NuxtLink 
-                    v-if="outpost"
-                    :to="`/${outpost.id}/projects`"
-                  >
-                    <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                      All Projects
-                    </button>
-                  </NuxtLink>
                 </div>
               </div>
 
@@ -257,14 +249,6 @@ onMounted(() => {
             <!-- Quick Actions Footer -->
             <div v-if="filteredProjects.length > 0" class="mt-12 pt-8 border-t border-gray-200">
               <div class="flex justify-center gap-4">
-                <NuxtLink 
-                  v-if="outpost"
-                  :to="`/${outpost.id}/projects`"
-                >
-                  <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    View All Projects
-                  </button>
-                </NuxtLink>
                 <NuxtLink 
                   v-if="outpost"
                   :to="`/${outpost.id}/members`"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { pb } from '~/utils/pb';
-import { createMembership, type Role } from '~/utils/permissions';
+import { addMember } from '~/utils/permissions';
 
 const props = defineProps<{
   outpostId: string;
@@ -12,7 +12,6 @@ const emit = defineEmits<{
 }>();
 
 const email = ref('');
-const role = ref<Role>('member');
 const inviting = ref(false);
 const error = ref('');
 const success = ref('');
@@ -58,16 +57,16 @@ async function inviteUser() {
   success.value = '';
 
   try {
-    await createMembership(props.outpostId, selectedUser.value.id, role.value);
-    success.value = `Successfully invited ${selectedUser.value.email}!`;
+    await addMember(props.outpostId, selectedUser.value.id);
+    success.value = `Successfully added ${selectedUser.value.email}!`;
     
     // Reset form
     setTimeout(() => {
       emit('close');
     }, 1500);
   } catch (err: any) {
-    console.error('Error inviting user:', err);
-    error.value = err.message || 'Failed to invite user';
+    console.error('Error adding member:', err);
+    error.value = err.message || 'Failed to add member';
   } finally {
     inviting.value = false;
   }
@@ -100,9 +99,9 @@ function handleEmailInput() {
         </svg>
       </button>
 
-      <h2 class="text-2xl font-bold mb-4">Invite Member</h2>
+      <h2 class="text-2xl font-bold mb-4">Add Member</h2>
       <p class="text-gray-600 mb-6">
-        Search for a user by email and assign them a role in this outpost.
+        Search for a user by email to add them to this outpost.
       </p>
 
       <form @submit.prevent="inviteUser" class="space-y-4">
@@ -186,19 +185,10 @@ function handleEmailInput() {
           </div>
         </div>
 
-        <div>
-          <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
-            Role
-          </label>
-          <select
-            id="role"
-            v-model="role"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="viewer">Viewer - Can view content</option>
-            <option value="member">Member - Can view and create content</option>
-            <option value="admin">Admin - Can manage members and settings</option>
-          </select>
+        <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <p class="text-sm text-gray-600">
+            <strong>Note:</strong> Members can view and collaborate on all projects in this outpost.
+          </p>
         </div>
 
         <div class="flex gap-3 pt-4">
@@ -207,7 +197,7 @@ function handleEmailInput() {
             :disabled="inviting || !selectedUser"
             class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ inviting ? 'Inviting...' : 'Invite User' }}
+            {{ inviting ? 'Adding...' : 'Add Member' }}
           </button>
           <button
             type="button"
@@ -222,4 +212,3 @@ function handleEmailInput() {
     </div>
   </div>
 </template>
-

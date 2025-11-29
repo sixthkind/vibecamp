@@ -26,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const onboardPathRegex = /^\/auth\/onboard\/?$/;
   const completedPathRegex = /^\/auth\/completed\/?$/;
   const pendingPathRegex = /^\/auth\/pending\/?$/;
-  const outpostsPathRegex = /^\/(?:create|outposts-list)\/?.*$/;
+  const outpostsPathRegex = /^\/(?:create|outposts)\/?.*$/;
 
   // Handle unauthenticated users
   if (!isAuthenticated) {

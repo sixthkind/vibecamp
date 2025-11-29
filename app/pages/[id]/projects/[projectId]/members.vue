@@ -7,10 +7,8 @@ import {
   canUserPerformOnProject,
   getProjectMembers,
   getOutpostMembers,
-  updateProjectMemberRole,
   removeProjectMember,
   createProjectMembership,
-  hasHigherRole,
   type Role 
 } from '~/utils/permissions';
 
@@ -24,14 +22,13 @@ const project = ref<any>(null);
 const projectMembers = ref<any[]>([]);
 const outpostMembers = ref<any[]>([]);
 const userRole = ref<Role | null>(null);
-const canManageMembers = ref(false);
+const isOwner = ref(false);
 const currentUserId = pb.authStore.record?.id;
 
 const loading = ref(true);
 const showAddModal = ref(false);
 const addingMember = ref(false);
 const selectedUserId = ref('');
-const selectedRole = ref<Role>('member');
 const error = ref('');
 const success = ref('');
 
@@ -54,7 +51,7 @@ async function loadData() {
     projectMembers.value = await getProjectMembers(projectId);
     outpostMembers.value = await getOutpostMembers(outpostId);
     userRole.value = await getProjectRole(projectId);
-    canManageMembers.value = await canUserPerformOnProject('manage_members', projectId);
+    isOwner.value = userRole.value === 'owner';
   } catch (err: any) {
     console.error('Error loading data:', err);
     error.value = 'Failed to load members';
@@ -63,45 +60,26 @@ async function loadData() {
   }
 }
 
-async function changeRole(membershipId: string, newRole: Role, currentRole: Role) {
-  const membership = projectMembers.value.find(m => m.id === membershipId);
-  if (membership?.userId === currentUserId) {
-    error.value = 'You cannot change your own role';
-    return;
-  }
-
-  if (userRole.value && !hasHigherRole(userRole.value, currentRole)) {
-    error.value = 'You cannot modify users with equal or higher roles';
-    return;
-  }
-
-  try {
-    const projectId = route.params.projectId as string;
-    await updateProjectMemberRole(membershipId, newRole, projectId);
-    success.value = 'Role updated successfully';
-    await loadData();
-    
-    setTimeout(() => {
-      success.value = '';
-    }, 3000);
-  } catch (err: any) {
-    error.value = err.message || 'Failed to update role';
-  }
-}
-
-async function removeMemberFromProject(membershipId: string, memberUserId: string) {
+async function removeMemberFromProject(memberUserId: string) {
   if (memberUserId === currentUserId) {
     error.value = 'You cannot remove yourself from the project';
     return;
   }
 
-  if (!confirm('Are you sure you want to remove this member from the project?')) {
+  // Cannot remove owner
+  const member = projectMembers.value.find(m => m.userId === memberUserId);
+  if (member?.role === 'owner') {
+    error.value = 'Cannot remove the owner';
+    return;
+  }
+
+  if (!confirm('Are you sure you want to remove this member from the outpost?')) {
     return;
   }
 
   try {
     const projectId = route.params.projectId as string;
-    await removeProjectMember(membershipId, projectId);
+    await removeProjectMember(memberUserId, projectId);
     success.value = 'Member removed successfully';
     await loadData();
     
@@ -115,7 +93,6 @@ async function removeMemberFromProject(membershipId: string, memberUserId: strin
 
 function openAddModal() {
   selectedUserId.value = '';
-  selectedRole.value = 'member';
   error.value = '';
   showAddModal.value = true;
 }
@@ -123,7 +100,6 @@ function openAddModal() {
 function closeAddModal() {
   showAddModal.value = false;
   selectedUserId.value = '';
-  selectedRole.value = 'member';
 }
 
 async function addMember() {
@@ -137,8 +113,8 @@ async function addMember() {
   error.value = '';
 
   try {
-    await createProjectMembership(projectId, selectedUserId.value, selectedRole.value);
-    success.value = 'Member added successfully';
+    await createProjectMembership(projectId, selectedUserId.value, 'member');
+    success.value = 'Member added to outpost successfully';
     closeAddModal();
     await loadData();
     
@@ -163,7 +139,7 @@ onMounted(() => {
       <CommonContainer>
         <div class="max-w-4xl mx-auto py-8 px-4">
           <div class="mb-8">
-            <NuxtLink :to="`/${outpostId}/projects/${projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+            <NuxtLink :to="`/${route.params.id}/projects/${route.params.projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
               <span>←</span> Back to Project
             </NuxtLink>
             <div class="flex justify-between items-center">
@@ -172,9 +148,12 @@ onMounted(() => {
                 <p class="text-gray-600 mt-2">
                   {{ project?.name || 'Loading...' }}
                 </p>
+                <p class="text-sm text-gray-500 mt-1">
+                  All members of the outpost can access this project
+                </p>
               </div>
               <button
-                v-if="canManageMembers"
+                v-if="isOwner"
                 @click="openAddModal"
                 class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -210,7 +189,7 @@ onMounted(() => {
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Joined
                     </th>
-                    <th v-if="canManageMembers" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th v-if="isOwner" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -241,28 +220,22 @@ onMounted(() => {
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <select
-                        v-if="canManageMembers && member.userId !== currentUserId && userRole && hasHigherRole(userRole, member.role)"
-                        :value="member.role"
-                        @change="(e) => changeRole(member.id, (e.target as HTMLSelectElement).value as Role, member.role)"
-                        class="px-3 py-1 border border-gray-300 rounded-lg text-sm capitalize focus:ring-2 focus:ring-blue-500"
+                      <span 
+                        :class="[
+                          'px-3 py-1 text-sm font-medium rounded-lg capitalize inline-block',
+                          member.role === 'owner' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
+                        ]"
                       >
-                        <option value="viewer">Viewer</option>
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
-                        <option value="owner" v-if="userRole === 'owner'">Owner</option>
-                      </select>
-                      <span v-else class="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg capitalize inline-block">
                         {{ member.role }}
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ new Date(member.created).toLocaleDateString() }}
                     </td>
-                    <td v-if="canManageMembers" class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <td v-if="isOwner" class="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button
-                        v-if="member.userId !== currentUserId && userRole && hasHigherRole(userRole, member.role)"
-                        @click="removeMemberFromProject(member.id, member.userId)"
+                        v-if="member.role !== 'owner' && member.userId !== currentUserId"
+                        @click="removeMemberFromProject(member.userId)"
                         class="text-red-600 hover:text-red-800 font-medium"
                       >
                         Remove
@@ -277,6 +250,12 @@ onMounted(() => {
               No members yet
             </div>
           </div>
+
+          <div v-if="!isOwner" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-700">
+              <strong>Note:</strong> Only the outpost owner can add or remove members.
+            </p>
+          </div>
         </div>
       </CommonContainer>
 
@@ -287,10 +266,14 @@ onMounted(() => {
         @click.self="closeAddModal"
       >
         <div class="bg-white rounded-lg p-6 max-w-md w-full">
-          <h2 class="text-xl font-bold mb-4">Add Project Member</h2>
+          <h2 class="text-xl font-bold mb-4">Add Member to Outpost</h2>
           
+          <p class="text-sm text-gray-600 mb-4">
+            Adding a member to the outpost will give them access to all projects.
+          </p>
+
           <div v-if="availableOutpostMembers.length === 0" class="text-center py-4 text-gray-500">
-            All outpost members are already in this project
+            No additional users available to add
           </div>
 
           <div v-else class="space-y-4">
@@ -312,23 +295,6 @@ onMounted(() => {
                 >
                   {{ member.user?.name || member.user?.email }}
                 </option>
-              </select>
-            </div>
-
-            <div>
-              <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
-                Role *
-              </label>
-              <select
-                id="role"
-                v-model="selectedRole"
-                required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent capitalize"
-              >
-                <option value="viewer">Viewer</option>
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-                <option value="owner" v-if="userRole === 'owner'">Owner</option>
               </select>
             </div>
 
@@ -354,4 +320,3 @@ onMounted(() => {
     </ion-content>
   </ion-page>
 </template>
-

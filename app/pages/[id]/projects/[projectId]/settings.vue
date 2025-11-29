@@ -138,7 +138,7 @@ async function deleteProject() {
 
   try {
     await pb.collection('projects').delete(projectId);
-    navigateTo(`/${outpostId}/projects`);
+    navigateTo('/');
   } catch (err: any) {
     console.error('Error deleting project:', err);
     error.value = err.message || 'Failed to delete project';
@@ -158,7 +158,7 @@ onMounted(() => {
       <CommonContainer>
         <div class="max-w-2xl mx-auto py-8 px-4">
           <div class="mb-8">
-            <NuxtLink :to="`/${outpostId}/projects/${projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+            <NuxtLink :to="`/${route.params.id}/projects/${projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
               <span>←</span> Back to Project
             </NuxtLink>
             <h1 class="text-3xl font-bold">Project Settings</h1>

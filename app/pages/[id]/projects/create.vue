@@ -113,7 +113,7 @@ async function createProject() {
     }
 
     // Navigate to the new project
-    navigateTo(`/${outpostId}/projects/${project.id}`);
+    navigateTo(`/${route.params.id}/projects/${project.id}`);
   } catch (err: any) {
     console.error('Error creating project:', err);
     error.value = err.message || 'Failed to create project';
@@ -133,8 +133,8 @@ onMounted(() => {
       <CommonContainer>
         <div class="max-w-2xl mx-auto py-8 px-4">
           <div class="mb-8">
-            <NuxtLink v-if="outpost" :to="`/${outpost.id}/projects`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
-              <span>←</span> Back to Projects
+            <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+              <span>←</span> Back to Dashboard
             </NuxtLink>
             <h1 class="text-3xl font-bold">Create New Project</h1>
             <p class="text-gray-600 mt-2">
@@ -244,7 +244,7 @@ onMounted(() => {
               </button>
               <NuxtLink
                 v-if="outpost"
-                :to="`/${outpost.id}/projects`"
+                to="/"
                 class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel

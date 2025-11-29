@@ -152,14 +152,6 @@ onUnmounted(() => {
 
       <div class="border-t border-gray-200">
         <NuxtLink
-          v-if="currentOutpost"
-          :to="`/${currentOutpost.id}/projects`"
-          class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-          @click="showDropdown = false"
-        >
-          📁 View Projects
-        </NuxtLink>
-        <NuxtLink
           to="/outposts"
           class="block px-4 py-3 text-sm text-blue-600 hover:bg-gray-50 transition-colors"
           @click="showDropdown = false"

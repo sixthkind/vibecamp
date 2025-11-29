@@ -5,7 +5,7 @@ import { fetch } from "undici";
 
 // --------- Config (env) ----------
 const POCKETBASE_URL = process.env.VITE_POCKETBASE_URL || "http://localhost:8090";
-const ALLOWED_COLLECTIONS = (process.env.ALLOWED_COLLECTIONS ?? "users,outposts,memberships")
+const ALLOWED_COLLECTIONS = (process.env.ALLOWED_COLLECTIONS ?? "users,outposts")
   .split(",")
   .map(s => s.trim());
 

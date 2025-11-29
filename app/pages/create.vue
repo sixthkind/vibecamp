@@ -57,23 +57,6 @@ async function createOutpost() {
     const outpost = await pb.collection('outposts').create(formData);
     console.log('Outpost created successfully:', outpost);
 
-    // Wait for hook to complete
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Manually create membership if hook failed
-    console.log('Creating membership...');
-    try {
-      await pb.collection('memberships').create({
-        user: userId,
-        outpost: outpost.id,
-        role: 'owner',
-      });
-      console.log('Membership created successfully');
-    } catch (membershipError: any) {
-      console.log('Membership creation result:', membershipError.message);
-      // If it already exists or we can't create it, that's okay if we can access the outpost
-    }
-
     // Verify we can access the outpost
     console.log('Verifying access...');
     const verifiedOutpost = await pb.collection('outposts').getOne(outpost.id);
@@ -185,4 +168,3 @@ async function createOutpost() {
     </ion-content>
   </ion-page>
 </template>
-

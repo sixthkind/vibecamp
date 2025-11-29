@@ -89,8 +89,8 @@ function getProjectImage(): string | null {
           <div v-else>
             <!-- Header -->
             <div class="mb-8">
-              <NuxtLink v-if="outpost" :to="`/${outpost.id}/projects`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
-                <span>←</span> Back to Projects
+              <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+                <span>←</span> Back to Dashboard
               </NuxtLink>
               
               <!-- Project Banner -->
