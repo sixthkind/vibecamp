@@ -27,10 +27,11 @@
     </div>
     
     <!-- Content -->
-    <div class="flex-1 min-w-0" @click="handleEdit">
+    <div class="flex-1 min-w-0">
       <div 
         class="text-gray-900 cursor-pointer hover:text-blue-600"
         :class="{ 'line-through': item.completed }"
+        @click="handleToggleCompleteClick"
       >
         {{ item.content }}
       </div>

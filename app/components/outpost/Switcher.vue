@@ -35,8 +35,8 @@ function selectOutpost(outpost: any) {
   setCurrentOutpost(outpost.id);
   showDropdown.value = false;
   
-  // Reload the page to refresh data for the new outpost
-  window.location.reload();
+  // Navigate to homepage to refresh data for the new outpost
+  window.location.href = '/';
 }
 
 function toggleDropdown() {

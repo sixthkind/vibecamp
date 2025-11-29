@@ -14,10 +14,6 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <a href="/playground" class="text-slate-500 hover:text-primary font-bold text-sm mt-4">
-              Playground
-            </a>
-
             <!-- Outpost Switcher -->
             <div v-if="pb.authStore.isValid" class="bg-white bg-opacity-70 backdrop-blur mt-3 rounded-lg border">
               <OutpostSwitcher />
