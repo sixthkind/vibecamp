@@ -265,6 +265,17 @@ function goBack() {
               </div>
             </div>
 
+            <!-- Add Tool Button -->
+            <div v-if="tools.length > 0" class="mt-4">
+              <button
+                @click="handleAddTool"
+                class="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                <Icon name="lucide:plus" size="20px" class="inline mr-2 mb-[-3px]" />
+                Add Tool
+              </button>
+            </div>
+
             <!-- Empty State -->
             <div v-if="tools.length === 0" class="text-center py-12">
               <Icon name="lucide:package" size="48px" class="text-gray-300 mx-auto mb-4" />
