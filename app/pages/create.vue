@@ -100,8 +100,8 @@ async function createOutpost() {
       <CommonContainer>
         <div class="max-w-2xl mx-auto py-8 px-4">
           <div class="mb-8">
-            <NuxtLink to="/outposts" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
-              <span>←</span> Back to Outposts
+            <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+              <span>←</span> Back to Dashboard
             </NuxtLink>
             <h1 class="text-3xl font-bold">Create New Outpost</h1>
             <p class="text-gray-600 mt-2">
@@ -173,7 +173,7 @@ async function createOutpost() {
                 {{ creating ? 'Creating...' : 'Create Outpost' }}
               </button>
               <NuxtLink
-                to="/outposts"
+                to="/"
                 class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel

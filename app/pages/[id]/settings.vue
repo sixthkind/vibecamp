@@ -108,7 +108,7 @@ async function deleteOutpost() {
 
   try {
     await pb.collection('outposts').delete(outpostId);
-    navigateTo('/outposts');
+    navigateTo('/');
   } catch (err: any) {
     console.error('Error deleting outpost:', err);
     error.value = err.message || 'Failed to delete outpost';
@@ -128,7 +128,7 @@ onMounted(() => {
       <CommonContainer>
         <div class="max-w-2xl mx-auto py-8 px-4">
           <div class="mb-8">
-            <NuxtLink :to="`/outposts`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+            <NuxtLink :to="`/`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
               <span>←</span> Back to Outposts
             </NuxtLink>
             <h1 class="text-3xl font-bold">Outpost Settings</h1>

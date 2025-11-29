@@ -84,7 +84,7 @@ function getProjectImage(): string | null {
           <div v-else>
             <!-- Header -->
             <div class="mb-8">
-              <NuxtLink v-if="outpost" :to="`/outposts/${outpost.id}/projects`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+              <NuxtLink v-if="outpost" :to="`/${outpost.id}/projects`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
                 <span>←</span> Back to Projects
               </NuxtLink>
               
@@ -135,7 +135,7 @@ function getProjectImage(): string | null {
                 <div class="flex gap-2">
                   <NuxtLink 
                     v-if="canManageMembers && outpost"
-                    :to="`/outposts/${outpost.id}/projects/${project.id}/members`"
+                    :to="`/${outpost.id}/projects/${project.id}/members`"
                   >
                     <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                       Members
@@ -143,7 +143,7 @@ function getProjectImage(): string | null {
                   </NuxtLink>
                   <NuxtLink 
                     v-if="canManageSettings && outpost"
-                    :to="`/outposts/${outpost.id}/projects/${project.id}/settings`"
+                    :to="`/${outpost.id}/projects/${project.id}/settings`"
                   >
                     <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                       Settings
@@ -182,7 +182,7 @@ function getProjectImage(): string | null {
             <div v-if="outpost && project" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
               <NuxtLink 
                 v-if="canManageMembers"
-                :to="`/outposts/${outpost.id}/projects/${project.id}/members`"
+                :to="`/${outpost.id}/projects/${project.id}/members`"
                 class="p-6 border rounded-lg hover:shadow-md transition-shadow"
               >
                 <h3 class="font-semibold text-lg mb-2">Team Members</h3>
@@ -191,7 +191,7 @@ function getProjectImage(): string | null {
 
               <NuxtLink 
                 v-if="canManageSettings"
-                :to="`/outposts/${outpost.id}/projects/${project.id}/settings`"
+                :to="`/${outpost.id}/projects/${project.id}/settings`"
                 class="p-6 border rounded-lg hover:shadow-md transition-shadow"
               >
                 <h3 class="font-semibold text-lg mb-2">Project Settings</h3>
@@ -200,7 +200,7 @@ function getProjectImage(): string | null {
 
               <NuxtLink 
                 v-if="outpost"
-                :to="`/outposts/${outpost.id}/projects`"
+                :to="`/${outpost.id}/projects`"
                 class="p-6 border rounded-lg hover:shadow-md transition-shadow"
               >
                 <h3 class="font-semibold text-lg mb-2">All Projects</h3>

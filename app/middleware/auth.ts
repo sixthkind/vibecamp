@@ -26,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const onboardPathRegex = /^\/auth\/onboard\/?$/;
   const completedPathRegex = /^\/auth\/completed\/?$/;
   const pendingPathRegex = /^\/auth\/pending\/?$/;
-  const outpostsPathRegex = /^\/outposts\/?.*$/;
+  const outpostsPathRegex = /^\/(?:create|outposts-list)\/?.*$/;
 
   // Handle unauthenticated users
   if (!isAuthenticated) {
@@ -99,12 +99,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       
       if (!outpostId) {
         // User has no outposts, redirect to create one
-        return navigateTo('/outposts/create');
+        return navigateTo('/create');
       }
     } catch (error) {
       console.error('Error initializing outpost context:', error);
       // On error, redirect to outposts page to let user choose/create
-      return navigateTo('/outposts');
+      return navigateTo('/');
     }
   }
 });

@@ -100,7 +100,7 @@ onMounted(() => {
                   View Outposts
                 </button>
               </NuxtLink>
-              <NuxtLink to="/outposts/create">
+              <NuxtLink to="/create">
                 <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   Create Outpost
                 </button>
@@ -122,7 +122,7 @@ onMounted(() => {
                 <div class="flex gap-2">
                   <NuxtLink 
                     v-if="canCreateProject && outpost"
-                    :to="`/outposts/${outpost.id}/projects/create`"
+                    :to="`/${outpost.id}/projects/create`"
                   >
                     <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                       + New Project
@@ -130,7 +130,7 @@ onMounted(() => {
                   </NuxtLink>
                   <NuxtLink 
                     v-if="outpost"
-                    :to="`/outposts/${outpost.id}/projects`"
+                    :to="`/${outpost.id}/projects`"
                   >
                     <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                       All Projects
@@ -176,7 +176,7 @@ onMounted(() => {
               </p>
               <NuxtLink 
                 v-if="canCreateProject && outpost"
-                :to="`/outposts/${outpost.id}/projects/create`"
+                :to="`/${outpost.id}/projects/create`"
               >
                 <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   Create Your First Project
@@ -194,7 +194,7 @@ onMounted(() => {
               <NuxtLink
                 v-for="project in filteredProjects"
                 :key="project.id"
-                :to="`/outposts/${outpost.id}/projects/${project.id}`"
+                :to="`/${outpost.id}/projects/${project.id}`"
                 class="block border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white"
               >
                 <!-- Project Header with Image/Color -->
@@ -259,7 +259,7 @@ onMounted(() => {
               <div class="flex justify-center gap-4">
                 <NuxtLink 
                   v-if="outpost"
-                  :to="`/outposts/${outpost.id}/projects`"
+                  :to="`/${outpost.id}/projects`"
                 >
                   <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                     View All Projects
@@ -267,7 +267,7 @@ onMounted(() => {
                 </NuxtLink>
                 <NuxtLink 
                   v-if="outpost"
-                  :to="`/outposts/${outpost.id}/members`"
+                  :to="`/${outpost.id}/members`"
                 >
                   <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                     Manage Team

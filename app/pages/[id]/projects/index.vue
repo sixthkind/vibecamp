@@ -89,7 +89,7 @@ function getProjectImage(project: any) {
               </div>
               <NuxtLink 
                 v-if="canCreateProject"
-                :to="`/outposts/${outpostId}/projects/create`"
+                :to="`/${outpostId}/projects/create`"
               >
                 <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   Create Project
@@ -124,7 +124,7 @@ function getProjectImage(project: any) {
             <p class="text-gray-600 mb-4">No projects yet.</p>
             <NuxtLink 
               v-if="canCreateProject"
-              :to="`/outposts/${outpostId}/projects/create`"
+              :to="`/${outpostId}/projects/create`"
             >
               <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 Create Your First Project
@@ -140,7 +140,7 @@ function getProjectImage(project: any) {
             <NuxtLink
               v-for="project in filteredProjects"
               :key="project.id"
-              :to="`/outposts/${outpostId}/projects/${project.id}`"
+              :to="`/${outpostId}/projects/${project.id}`"
               class="block border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
             >
               <!-- Project Header with Image/Color -->

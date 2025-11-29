@@ -163,7 +163,7 @@ onMounted(() => {
       <CommonContainer>
         <div class="max-w-4xl mx-auto py-8 px-4">
           <div class="mb-8">
-            <NuxtLink :to="`/outposts/${outpostId}/projects/${projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+            <NuxtLink :to="`/${outpostId}/projects/${projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
               <span>←</span> Back to Project
             </NuxtLink>
             <div class="flex justify-between items-center">
