@@ -20,6 +20,17 @@ export type Action =
   | 'manage_settings'
   | 'delete_outpost';
 
+// Project-specific actions
+export type ProjectAction =
+  | 'view'
+  | 'create'
+  | 'edit'
+  | 'delete'
+  | 'manage_members'
+  | 'manage_settings'
+  | 'archive'
+  | 'delete_project';
+
 // Permission matrix: minimum role required for each action
 const PERMISSION_MATRIX: Record<Action, Role> = {
   view: 'viewer',
@@ -29,6 +40,18 @@ const PERMISSION_MATRIX: Record<Action, Role> = {
   manage_members: 'admin',
   manage_settings: 'admin',
   delete_outpost: 'owner',
+};
+
+// Project permission matrix
+const PROJECT_PERMISSION_MATRIX: Record<ProjectAction, Role> = {
+  view: 'viewer',
+  create: 'member',
+  edit: 'member',
+  delete: 'member',
+  manage_members: 'admin',
+  manage_settings: 'admin',
+  archive: 'admin',
+  delete_project: 'owner',
 };
 
 /**
@@ -310,5 +333,209 @@ export async function initializeOutpostContext() {
   }
 
   return null;
+}
+
+// ============================================================================
+// PROJECT PERMISSIONS
+// ============================================================================
+
+/**
+ * Get all projects the user can access in an outpost
+ */
+export async function getUserProjects(outpostId: string) {
+  const userId = pb.authStore.record?.id;
+  if (!userId) return [];
+
+  try {
+    // Get all projects in the outpost that the user has access to
+    // This will automatically filter based on the collection's listRule
+    const projects = await pb.collection('projects').getFullList({
+      filter: `outpost = "${outpostId}"`,
+      sort: '-created',
+    });
+
+    // For each project, get the user's role
+    const projectsWithRoles = await Promise.all(
+      projects.map(async (project) => {
+        const role = await getProjectRole(project.id);
+        return {
+          ...project,
+          userRole: role,
+        };
+      })
+    );
+
+    return projectsWithRoles;
+  } catch (error) {
+    console.error('Error fetching user projects:', error);
+    return [];
+  }
+}
+
+/**
+ * Get the user's role in a specific project
+ * Considers both project membership and outpost membership
+ */
+export async function getProjectRole(projectId: string): Promise<Role | null> {
+  const userId = pb.authStore.record?.id;
+  if (!userId) return null;
+
+  try {
+    // Get the project with expanded outpost
+    const project = await pb.collection('projects').getOne(projectId, {
+      expand: 'outpost',
+    });
+
+    // Check if user is the outpost owner
+    const outpost = project.expand?.outpost;
+    if (outpost && outpost.owner === userId) {
+      return 'owner';
+    }
+
+    // Check if user is an outpost admin
+    const outpostMemberships = await pb.collection('memberships').getFullList({
+      filter: `user = "${userId}" && outpost = "${outpost.id}"`,
+      limit: 1,
+    });
+
+    if (outpostMemberships.length > 0) {
+      const outpostRole = outpostMemberships[0].role as Role;
+      // Outpost admins and owners have admin rights in all projects
+      if (ROLE_HIERARCHY[outpostRole] >= ROLE_HIERARCHY.admin) {
+        return outpostRole;
+      }
+    }
+
+    // Check project membership
+    const projectMemberships = await pb.collection('project_memberships').getFullList({
+      filter: `user = "${userId}" && project = "${projectId}"`,
+      limit: 1,
+    });
+
+    if (projectMemberships.length > 0) {
+      return projectMemberships[0].role as Role;
+    }
+
+    // If user is an outpost member but not project member, they can view
+    if (outpostMemberships.length > 0) {
+      return outpostMemberships[0].role as Role;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching project role:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if a user can perform a specific action on a project
+ */
+export async function canUserPerformOnProject(
+  action: ProjectAction,
+  projectId: string
+): Promise<boolean> {
+  const userId = pb.authStore.record?.id;
+  if (!userId) return false;
+
+  const userRole = await getProjectRole(projectId);
+  if (!userRole) return false;
+
+  const requiredRole = PROJECT_PERMISSION_MATRIX[action];
+  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
+}
+
+/**
+ * Get all members of a project
+ */
+export async function getProjectMembers(projectId: string) {
+  try {
+    const memberships = await pb.collection('project_memberships').getFullList({
+      filter: `project = "${projectId}"`,
+      expand: 'user',
+      sort: '-created',
+    });
+
+    return memberships.map(membership => ({
+      id: membership.id,
+      userId: membership.user,
+      role: membership.role as Role,
+      created: membership.created,
+      user: membership.expand?.user,
+    }));
+  } catch (error) {
+    console.error('Error fetching project members:', error);
+    return [];
+  }
+}
+
+/**
+ * Create a new project membership
+ */
+export async function createProjectMembership(
+  projectId: string,
+  userId: string,
+  role: Role
+) {
+  // Check if current user has permission
+  const canManage = await canUserPerformOnProject('manage_members', projectId);
+  if (!canManage) {
+    throw new Error('Insufficient permissions to manage project members');
+  }
+
+  try {
+    return await pb.collection('project_memberships').create({
+      project: projectId,
+      user: userId,
+      role,
+    });
+  } catch (error: any) {
+    if (error.data?.data?.project?.message?.includes('unique')) {
+      throw new Error('User is already a member of this project');
+    }
+    throw error;
+  }
+}
+
+/**
+ * Update a project member's role
+ */
+export async function updateProjectMemberRole(
+  membershipId: string,
+  newRole: Role,
+  projectId: string
+) {
+  // Check if current user has permission
+  const canManage = await canUserPerformOnProject('manage_members', projectId);
+  if (!canManage) {
+    throw new Error('Insufficient permissions to manage project members');
+  }
+
+  try {
+    return await pb.collection('project_memberships').update(membershipId, {
+      role: newRole,
+    });
+  } catch (error) {
+    console.error('Error updating project member role:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a member from a project
+ */
+export async function removeProjectMember(membershipId: string, projectId: string) {
+  // Check if current user has permission
+  const canManage = await canUserPerformOnProject('manage_members', projectId);
+  if (!canManage) {
+    throw new Error('Insufficient permissions to manage project members');
+  }
+
+  try {
+    await pb.collection('project_memberships').delete(membershipId);
+  } catch (error) {
+    console.error('Error removing project member:', error);
+    throw error;
+  }
 }
 

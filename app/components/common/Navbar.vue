@@ -101,6 +101,10 @@
     path: "/",
   },
   {
+    title: "Outposts",
+    path: "/outposts",
+  },
+  {
     title: "Profile",
     path: "/profile",
   }
