@@ -4,7 +4,7 @@ import { canUserPerformOnProject } from './permissions';
 export interface ProjectTool {
   id: string;
   project: string;
-  tool_type: 'chat' | 'docs' | 'tasks' | 'schedule' | 'files' | 'board';
+  tool_type: 'chat' | 'docs' | 'tasks';
   name: string;
   active: boolean;
   settings: Record<string, any>;
@@ -156,9 +156,6 @@ export function getToolIcon(toolType: string): string {
     chat: 'lucide:message-square',
     docs: 'lucide:folder-open',
     tasks: 'lucide:check-square',
-    schedule: 'lucide:calendar',
-    files: 'lucide:folder',
-    board: 'lucide:trello',
   };
   return icons[toolType] || 'lucide:tool';
 }
@@ -171,9 +168,6 @@ export function getToolDescription(toolType: string): string {
     chat: 'Real-time group chat for project communication',
     docs: 'Shared documents and file storage',
     tasks: 'Task lists and to-do items',
-    schedule: 'Events, deadlines, and milestones',
-    files: 'File storage and sharing',
-    board: 'Kanban-style project board',
   };
   return descriptions[toolType] || 'Project collaboration tool';
 }

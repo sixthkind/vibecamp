@@ -33,9 +33,6 @@ const availableToolTypes = [
   { value: 'chat', label: 'Chat', description: 'Real-time group chat for project communication' },
   { value: 'docs', label: 'Docs & Files', description: 'Shared documents and wikis' },
   { value: 'tasks', label: 'To-dos', description: 'Task lists and to-do items' },
-  { value: 'schedule', label: 'Schedule', description: 'Events, deadlines, and milestones' },
-  { value: 'files', label: 'Files', description: 'File storage and sharing' },
-  { value: 'board', label: 'Board', description: 'Kanban-style project board' },
 ];
 
 async function loadData() {
