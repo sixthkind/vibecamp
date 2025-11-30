@@ -34,6 +34,7 @@ const availableToolTypes = [
   { value: 'docs', label: 'Docs & Files', description: 'Shared documents and wikis' },
   { value: 'tasks', label: 'To-dos', description: 'Task lists and to-do items' },
   { value: 'schedule', label: 'Schedule', description: 'Project calendar and event scheduling' },
+  { value: 'board', label: 'Board', description: 'Message board for announcements and updates' },
 ];
 
 async function loadData() {

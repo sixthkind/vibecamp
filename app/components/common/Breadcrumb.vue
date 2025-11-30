@@ -58,6 +58,7 @@ const toolLabels: Record<string, string> = {
   docs: 'Docs',
   tasks: 'To-dos',
   schedule: 'Schedule',
+  board: 'Board',
   todos: 'To-dos',
   members: 'Members',
   settings: 'Settings',
@@ -85,6 +86,7 @@ async function buildBreadcrumbs() {
     const projectId = params.projectId as string;
     const itemId = params.itemId as string;
     const eventId = params.eventId as string;
+    const postId = params.postId as string;
 
     // If we have a project, fetch it
     if (projectId) {
@@ -140,6 +142,21 @@ async function buildBreadcrumbs() {
               } catch (err) {
                 console.error('Error fetching event:', err);
                 crumbs.push({ label: 'Event' });
+              }
+            } else if (toolType === 'board' && postId) {
+              // We're viewing a specific board post
+              crumbs.push({
+                label: toolLabels[toolType],
+                path: `/${outpostId}/projects/${projectId}/${toolType}`,
+              });
+              
+              // Fetch the board post
+              try {
+                const post = await pb.collection('board_posts').getOne(postId);
+                crumbs.push({ label: post.title });
+              } catch (err) {
+                console.error('Error fetching board post:', err);
+                crumbs.push({ label: 'Post' });
               }
             } else {
               // Just add the tool name as the current page
