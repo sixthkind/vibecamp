@@ -74,7 +74,7 @@ function getProjectImage(): string | null {
   <ion-page>
     <ion-content>
       <CommonContainer>
-        <div class="max-w-6xl mx-auto py-8 px-4">
+        <div class="max-w-6xl mx-auto py-4 px-4">
           <div v-if="loading" class="text-center py-12">
             <ion-spinner></ion-spinner>
             <p class="mt-4 text-gray-600">Loading project...</p>
@@ -87,9 +87,9 @@ function getProjectImage(): string | null {
           <div v-else>
             <!-- Header -->
             <div class="mb-8">
-              <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
+              <!-- <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
                 <span>←</span> Back to Dashboard
-              </NuxtLink>
+              </NuxtLink> -->
               
               <!-- Project Banner -->
               <div 

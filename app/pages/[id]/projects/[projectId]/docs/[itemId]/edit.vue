@@ -70,6 +70,10 @@ function goBack() {
   router.push(`/${outpostId}/projects/${projectId}/docs/${itemId}`);
 }
 
+function handleCancel() {
+  goBack();
+}
+
 async function handleSave() {
   if (!title.value.trim()) {
     const alert = await alertController.create({
@@ -121,22 +125,6 @@ onMounted(() => {
 
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button @click="goBack">
-            <Icon name="lucide:arrow-left" size="24px" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>Edit {{ item?.type === 'document' ? 'Document' : 'File' }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="handleSave" :disabled="saving">
-            <Icon name="lucide:check" size="24px" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content :fullscreen="true">
       <div v-if="loading" class="flex items-center justify-center h-full">
         <div class="text-center">
@@ -149,13 +137,15 @@ onMounted(() => {
         <div class="max-w-md text-center">
           <Icon name="lucide:alert-circle" size="48px" class="text-red-500 mx-auto mb-4" />
           <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h2>
-          <button @click="goBack" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Go Back
-          </button>
+          <NuxtLink :to="`/${outpostId}/projects/${projectId}/docs/${itemId}`">
+            <button class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Go Back
+            </button>
+          </NuxtLink>
         </div>
       </div>
 
-      <div v-else class="max-w-3xl mx-auto py-6 px-4">
+      <div v-else class="max-w-3xl mx-auto py-6 px-4 pt-20">
         <!-- Title Input -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -199,9 +189,9 @@ onMounted(() => {
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex gap-3">
+        <div class="flex gap-3 pb-6">
           <button
-            @click="goBack"
+            @click="handleCancel"
             class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Cancel

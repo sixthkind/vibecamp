@@ -1,5 +1,26 @@
 <template>
   <div class="flex flex-col h-full bg-gray-50">
+    <!-- Header -->
+    <div class="flex-shrink-0 px-4 py-4 pt-20 bg-white border-b border-gray-200">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-900">&nbsp;</h2>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="canManage"
+            @click="toggleEditMode"
+            :class="[
+              'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2',
+              editMode 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ]"
+          >
+            <Icon :name="editMode ? 'lucide:check' : 'lucide:edit-2'" size="16px" />
+            <span>{{ editMode ? 'Done' : 'Edit' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Messages Container -->
     <div class="flex-1 overflow-y-auto px-4 py-6" ref="messagesContainer">
@@ -89,21 +110,6 @@
 
         <!-- Input Area -->
         <div class="flex gap-2 items-center">
-          <!-- Edit Mode Toggle -->
-          <button 
-            v-if="canManage" 
-            @click="toggleEditMode" 
-            :class="[
-              'h-10 px-3 rounded-lg transition-colors text-sm font-medium flex items-center gap-2',
-              editMode 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            ]"
-            title="Edit mode"
-          >
-            <Icon :name="editMode ? 'lucide:check' : 'lucide:edit-2'" size="16px" />
-          </button>
-
           <!-- File Attachment Button -->
           <button 
             @click="triggerFileUpload" 

@@ -10,7 +10,10 @@
                 <span class="font-bold text-primary">_</span><span class="font-bold text-slate-500">{{ sitename }}</span><span class="font-bold text-slate-500 opacity-80">{{ sitename2 }}</span>
               </a>
             </div>
-
+            
+            <div class="mt-3 px-0 py-2">
+              <CommonBreadcrumb />
+            </div>
           </div>
 
           <div class="flex items-center gap-3">

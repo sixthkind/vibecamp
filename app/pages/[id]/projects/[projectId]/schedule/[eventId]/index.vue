@@ -130,10 +130,6 @@ onMounted(() => {
   loadData();
 });
 
-function goBack() {
-  router.push(`/${outpostId}/projects/${projectId}/schedule`);
-}
-
 function handleEdit() {
   // Navigate back with a query parameter to open the edit modal
   router.push({
@@ -157,7 +153,7 @@ async function handleDelete() {
         handler: async () => {
           try {
             await pb.collection('calendar_events').delete(eventId);
-            goBack();
+            router.push(`/${outpostId}/projects/${projectId}/schedule`);
           } catch (error) {
             console.error('Error deleting event:', error);
             alert('Failed to delete event. Please try again.');
@@ -188,22 +184,6 @@ function getAvatarUrl(user: any): string {
 
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button @click="goBack">
-            <Icon name="lucide:arrow-left" size="24px" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>Event Details</ion-title>
-        <ion-buttons slot="end">
-          <ion-button v-if="canEdit && !loading" @click="handleEdit">
-            <Icon name="lucide:edit" size="20px" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content>
       <CommonContainer>
         <div class="max-w-3xl mx-auto py-8 px-4">

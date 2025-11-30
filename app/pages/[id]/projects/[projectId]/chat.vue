@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
 import { getActiveTool } from '~/utils/tools';
 import { canUserPerformOnProject } from '~/utils/permissions';
@@ -11,7 +11,6 @@ definePageMeta({
 });
 
 const route = useRoute();
-const router = useRouter();
 
 const projectId = String(route.params.projectId);
 const outpostId = String(route.params.id);
@@ -57,25 +56,10 @@ async function loadData() {
 onMounted(() => {
   loadData();
 });
-
-function goBack() {
-  router.push(`/${outpostId}/projects/${projectId}`);
-}
 </script>
 
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button @click="goBack">
-            <Icon name="lucide:arrow-left" size="24px" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>{{ project?.name || 'Chat' }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content :fullscreen="true">
       <div v-if="loading" class="flex items-center justify-center h-full">
         <div class="text-center">
@@ -84,13 +68,15 @@ function goBack() {
         </div>
       </div>
 
-      <div v-else-if="error" class="flex items-center justify-center h-full p-4">
+      <div v-else-if="error" class="flex items-center justify-center h-full pt-4">
         <div class="max-w-md text-center">
           <Icon name="lucide:alert-circle" size="48px" class="text-red-500 mx-auto mb-4" />
           <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h2>
-          <button @click="goBack" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Back to Project
-          </button>
+          <!-- <NuxtLink :to="`/${outpostId}/projects/${projectId}`">
+            <button class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Back to Project
+            </button>
+          </NuxtLink> -->
         </div>
       </div>
 

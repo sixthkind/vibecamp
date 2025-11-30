@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col h-full bg-gray-50">
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto px-4 py-4">
-      <div class="max-w-6xl mx-auto pt-6">
+    <div class="flex-1 overflow-y-auto px-4 py-4 pt-20">
+      <div class="max-w-6xl mx-auto">
         <!-- Filter and Action Bar -->
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-2">

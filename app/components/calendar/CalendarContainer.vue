@@ -1,7 +1,7 @@
 <template>
   <div class="calendar-container flex flex-col h-full bg-gray-50">
     <!-- Header -->
-    <div class="flex-shrink-0 px-4 py-4 bg-white border-b border-gray-200">
+    <div class="flex-shrink-0 px-4 py-4 pt-20 bg-white border-b border-gray-200">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
         <h2 class="text-xl font-semibold text-gray-900">Schedule</h2>
         <button

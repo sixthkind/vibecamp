@@ -64,10 +64,6 @@ async function loadData() {
   }
 }
 
-function goBack() {
-  router.push(`/${outpostId}/projects/${projectId}/docs`);
-}
-
 function getFileUrl() {
   if (item.value?.type === 'file' && item.value.file) {
     return pb.files.getURL(item.value, item.value.file);
@@ -160,7 +156,7 @@ async function handleDelete() {
         handler: async () => {
           try {
             await pb.collection('docs_items').delete(itemId);
-            goBack();
+            router.push(`/${outpostId}/projects/${projectId}/docs`);
           } catch (error) {
             console.error('Error deleting item:', error);
             const errorAlert = await alertController.create({
@@ -184,25 +180,6 @@ onMounted(() => {
 
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button @click="goBack">
-            <Icon name="lucide:arrow-left" size="24px" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>{{ item?.title || 'File Details' }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="handleDownload" v-if="item?.type === 'file'">
-            <Icon name="lucide:download" size="24px" />
-          </ion-button>
-          <ion-button @click="handleEdit" v-if="canManage">
-            <Icon name="lucide:edit-2" size="24px" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content :fullscreen="true">
       <div v-if="loading" class="flex items-center justify-center h-full">
         <div class="text-center">
@@ -215,13 +192,42 @@ onMounted(() => {
         <div class="max-w-md text-center">
           <Icon name="lucide:alert-circle" size="48px" class="text-red-500 mx-auto mb-4" />
           <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h2>
-          <button @click="goBack" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Back to Docs & Files
-          </button>
+          <NuxtLink :to="`/${outpostId}/projects/${projectId}/docs`">
+            <button class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Back to Docs & Files
+            </button>
+          </NuxtLink>
         </div>
       </div>
 
-      <div v-else-if="item" class="max-w-5xl mx-auto py-6 px-4">
+      <div v-else-if="item" class="max-w-5xl mx-auto py-6 px-4 pt-20">
+        <!-- Action Buttons at Top -->
+        <div class="flex justify-end gap-2 mb-4">
+          <button
+            v-if="item?.type === 'file'"
+            @click="handleDownload"
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+          >
+            <Icon name="lucide:download" size="20px" />
+            <span>Download</span>
+          </button>
+          <button
+            v-if="canManage"
+            @click="handleEdit"
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+          >
+            <Icon name="lucide:edit-2" size="20px" />
+            <span>Edit</span>
+          </button>
+          <button
+            v-if="canManage"
+            @click="handleDelete"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+          >
+            <Icon name="lucide:trash-2" size="20px" />
+            <span>Delete</span>
+          </button>
+        </div>
         <!-- Document Content -->
         <div v-if="item.type === 'document'" class="bg-white rounded-lg border border-gray-200 p-8 mb-6">
           <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ item.title }}</h1>
@@ -345,24 +351,6 @@ onMounted(() => {
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div v-if="canManage" class="flex gap-3">
-          <button
-            @click="handleEdit"
-            class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-          >
-            <Icon name="lucide:edit-2" size="20px" />
-            <span>Edit</span>
-          </button>
-          <button
-            @click="handleDelete"
-            class="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <Icon name="lucide:trash-2" size="20px" />
-            <span>Delete</span>
-          </button>
         </div>
       </div>
     </ion-content>
