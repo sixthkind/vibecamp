@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { pb } from '~/utils/pb';
 import { getActiveTool } from '~/utils/tools';
 import { canUserPerformOnProject } from '~/utils/permissions';
-import TodoContainer from '~/components/todos/TodoContainer.vue';
+import CalendarContainer from '~/components/calendar/CalendarContainer.vue';
 
 definePageMeta({
   middleware: "auth"
@@ -18,7 +18,7 @@ const outpostId = String(route.params.id);
 
 const loading = ref(true);
 const error = ref('');
-const todosTool = ref<any>(null);
+const scheduleTool = ref<any>(null);
 const project = ref<any>(null);
 const canManage = ref(false);
 
@@ -30,24 +30,24 @@ async function loadData() {
     // Fetch project
     project.value = await pb.collection('projects').getOne(projectId);
     
-    // Check if todos tool is active (tasks is the tool_type)
-    todosTool.value = await getActiveTool(projectId, 'tasks');
+    // Check if schedule tool is active
+    scheduleTool.value = await getActiveTool(projectId, 'schedule');
     
-    if (!todosTool.value) {
-      error.value = 'To-dos are not available for this project';
+    if (!scheduleTool.value) {
+      error.value = 'Schedule is not available for this project';
       return;
     }
 
     // Check if user can manage tools
     canManage.value = await canUserPerformOnProject('manage_settings', projectId);
   } catch (err: any) {
-    console.error('Error loading todos:', err);
+    console.error('Error loading schedule:', err);
     if (err.status === 404) {
       error.value = 'Project not found';
     } else if (err.status === 403) {
       error.value = 'You do not have access to this project';
     } else {
-      error.value = 'Failed to load to-dos';
+      error.value = 'Failed to load schedule';
     }
   } finally {
     loading.value = false;
@@ -72,7 +72,7 @@ function goBack() {
             <Icon name="lucide:arrow-left" size="24px" />
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ project?.name || 'To-dos' }}</ion-title>
+        <ion-title>{{ project?.name || 'Schedule' }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -80,7 +80,7 @@ function goBack() {
       <div v-if="loading" class="flex items-center justify-center h-full">
         <div class="text-center">
           <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading to-dos...</p>
+          <p class="text-gray-500 mt-4">Loading schedule...</p>
         </div>
       </div>
 
@@ -94,9 +94,9 @@ function goBack() {
         </div>
       </div>
 
-      <div v-else-if="todosTool" class="h-full">
-        <TodoContainer
-          :projectToolId="todosTool.id"
+      <div v-else-if="scheduleTool" class="h-full">
+        <CalendarContainer
+          :projectToolId="scheduleTool.id"
           :projectId="projectId"
         />
       </div>
@@ -109,5 +109,4 @@ ion-content {
   --background: #f9fafb;
 }
 </style>
-
 

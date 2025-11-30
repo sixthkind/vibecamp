@@ -32,33 +32,6 @@ migrate((app) => {
         "type": "relation"
       },
       {
-        "cascadeDelete": true,
-        "collectionId": "docs_folders_collection",
-        "hidden": false,
-        "id": "relation_folder",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "folder",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "select_type",
-        "maxSelect": 1,
-        "name": "type",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "values": [
-          "document",
-          "file"
-        ]
-      },
-      {
         "autogeneratePattern": "",
         "hidden": false,
         "id": "text_title",
@@ -73,56 +46,10 @@ migrate((app) => {
         "type": "text"
       },
       {
-        "convertUrls": false,
-        "hidden": false,
-        "id": "editor_content",
-        "maxSize": 5242880,
-        "name": "content",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "editor"
-      },
-      {
-        "hidden": false,
-        "id": "file_file",
-        "maxSelect": 1,
-        "maxSize": 20971520,
-        "mimeTypes": [
-          "image/jpeg",
-          "image/png",
-          "image/gif",
-          "image/webp",
-          "image/svg+xml",
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "application/vnd.ms-excel",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "application/vnd.ms-powerpoint",
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-          "text/plain",
-          "text/csv",
-          "text/rtf",
-          "application/zip",
-          "application/x-rar-compressed"
-        ],
-        "name": "file",
-        "presentable": false,
-        "protected": false,
-        "required": false,
-        "system": false,
-        "thumbs": [
-          "100x100",
-          "300x300"
-        ],
-        "type": "file"
-      },
-      {
         "autogeneratePattern": "",
         "hidden": false,
         "id": "text_description",
-        "max": 1000,
+        "max": 2000,
         "min": 0,
         "name": "description",
         "pattern": "",
@@ -131,6 +58,71 @@ migrate((app) => {
         "required": false,
         "system": false,
         "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "date_start_date",
+        "max": "",
+        "min": "",
+        "name": "start_date",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date_end_date",
+        "max": "",
+        "min": "",
+        "name": "end_date",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "bool_all_day",
+        "name": "all_day",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_assignees",
+        "maxSelect": 999,
+        "minSelect": 0,
+        "name": "assignees",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "json_recurrence_rule",
+        "maxSize": 0,
+        "name": "recurrence_rule",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "date_recurrence_end_date",
+        "max": "",
+        "min": "",
+        "name": "recurrence_end_date",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
       },
       {
         "cascadeDelete": false,
@@ -144,18 +136,6 @@ migrate((app) => {
         "required": true,
         "system": false,
         "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "number_position",
-        "max": null,
-        "min": 0,
-        "name": "position",
-        "onlyInt": true,
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "number"
       },
       {
         "hidden": false,
@@ -178,17 +158,15 @@ migrate((app) => {
         "type": "autodate"
       }
     ],
-    "id": "docs_items_collection",
+    "id": "calendar_events_collection",
     "indexes": [
-      "CREATE INDEX idx_docs_items_project_tool ON docs_items (project_tool)",
-      "CREATE INDEX idx_docs_items_folder ON docs_items (folder)",
-      "CREATE INDEX idx_docs_items_type ON docs_items (type)",
-      "CREATE INDEX idx_docs_items_created_by ON docs_items (created_by)",
-      "CREATE INDEX idx_docs_items_position ON docs_items (position)",
-      "CREATE INDEX idx_docs_items_created ON docs_items (created)"
+      "CREATE INDEX idx_calendar_events_project_tool ON calendar_events (project_tool)",
+      "CREATE INDEX idx_calendar_events_start_date ON calendar_events (start_date)",
+      "CREATE INDEX idx_calendar_events_all_day ON calendar_events (all_day)",
+      "CREATE INDEX idx_calendar_events_created_by ON calendar_events (created_by)"
     ],
     "listRule": "@request.auth.id != \"\" && (@request.auth.project_memberships_via_user.project ?= project_tool.project.id)",
-    "name": "docs_items",
+    "name": "calendar_events",
     "system": false,
     "type": "base",
     "updateRule": "@request.auth.id != \"\" && (@request.auth.project_memberships_via_user.project ?= project_tool.project.id)",
@@ -197,9 +175,8 @@ migrate((app) => {
 
   return app.save(collection);
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("docs_items_collection");
+  const collection = app.findCollectionByNameOrId("calendar_events_collection");
 
   return app.delete(collection);
 });
-
 

@@ -32,3 +32,4 @@ migrate((app) => {
   return app.save(collection);
 });
 
+

@@ -33,6 +33,7 @@ const availableToolTypes = [
   { value: 'chat', label: 'Chat', description: 'Real-time group chat for project communication' },
   { value: 'docs', label: 'Docs & Files', description: 'Shared documents and wikis' },
   { value: 'tasks', label: 'To-dos', description: 'Task lists and to-do items' },
+  { value: 'schedule', label: 'Schedule', description: 'Project calendar and event scheduling' },
 ];
 
 async function loadData() {

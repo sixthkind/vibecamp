@@ -124,3 +124,4 @@ If you encounter any issues:
 2. Check browser console for frontend errors
 3. Verify your user has the "owner" role on outposts you're trying to manage
 
+
