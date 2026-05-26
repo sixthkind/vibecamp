@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { pb } from '~/utils/pb';
 import { getCurrentOutpostId, getCurrentOutpost, getUserProjects, canUserPerform } from '~/utils/permissions';
 
 definePageMeta({
@@ -11,12 +10,8 @@ const outpost = ref<any>(null);
 const projects = ref<any[]>([]);
 const loading = ref(true);
 const canCreateProject = ref(false);
-const showArchived = ref(false);
 
 const filteredProjects = computed(() => {
-  if (showArchived.value) {
-    return projects.value.filter(p => p.status === 'archived');
-  }
   return projects.value.filter(p => p.status === 'active');
 });
 
@@ -41,24 +36,6 @@ async function loadData() {
   } finally {
     loading.value = false;
   }
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800';
-    case 'archived':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
-function getProjectImage(project: any) {
-  if (project.avatar) {
-    return `${pb.baseUrl}/api/files/${project.collectionId}/${project.id}/${project.avatar}`;
-  }
-  return null;
 }
 
 onMounted(() => {
@@ -101,29 +78,6 @@ onMounted(() => {
 
           <!-- Dashboard with Projects -->
           <div v-else>
-            <!-- Header -->
-            <div class="mb-8">
-              <div class="flex justify-between items-start mb-6">
-                <div>
-                  <h1 class="text-3xl font-bold mb-2">{{ outpost?.name || 'Dashboard' }}</h1>
-                  <p v-if="outpost?.description" class="text-gray-600 text-lg">
-                    {{ outpost.description }}
-                  </p>
-                </div>
-                <div class="flex gap-2">
-                  <NuxtLink 
-                    v-if="canCreateProject && outpost"
-                    :to="`/${outpost.id}/projects/create`"
-                  >
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      + New Project
-                    </button>
-                  </NuxtLink>
-                </div>
-              </div>
-
-            </div>
-
             <!-- Loading State -->
             <div v-if="loading" class="text-center py-12">
               <ion-spinner></ion-spinner>
@@ -141,19 +95,11 @@ onMounted(() => {
               <p class="text-gray-600 mb-6 max-w-md mx-auto">
                 Create your first project to start organizing work and collaborating with your team.
               </p>
-              <NuxtLink 
-                v-if="canCreateProject && outpost"
-                :to="`/${outpost.id}/projects/create`"
-              >
-                <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  Create Your First Project
-                </button>
-              </NuxtLink>
             </div>
 
             <!-- No Filtered Projects -->
             <div v-else-if="filteredProjects.length === 0" class="text-center py-12">
-              <p class="text-gray-600">No {{ showArchived ? 'archived' : 'active' }} projects found.</p>
+              <p class="text-gray-600">No active projects found.</p>
             </div>
 
             <!-- Projects Grid -->
@@ -162,90 +108,26 @@ onMounted(() => {
                 v-for="project in filteredProjects"
                 :key="project.id"
                 :to="`/${outpost.id}/projects/${project.id}`"
-                class="block border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white"
+                class="flex min-h-32 items-center rounded-lg border border-gray-200 bg-white p-6 transition-colors hover:border-gray-300"
               >
-                <!-- Project Header with Image/Color -->
-                <div 
-                  v-if="project.avatar || project.color"
-                  class="h-32 relative"
-                  :style="project.color && !project.avatar ? { backgroundColor: project.color } : ''"
-                >
-                  <img 
-                    v-if="project.avatar"
-                    :src="getProjectImage(project)"
-                    :alt="project.name"
-                    class="w-full h-full object-cover"
-                  />
-                  <div 
-                    v-else-if="project.color"
-                    class="w-full h-full flex items-center justify-center text-white text-4xl font-bold"
-                  >
-                    {{ project.name.charAt(0).toUpperCase() }}
-                  </div>
-                </div>
-                <div 
-                  v-else
-                  class="h-32 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
-                >
-                  <span class="text-white text-4xl font-bold">
-                    {{ project.name.charAt(0).toUpperCase() }}
-                  </span>
-                </div>
-
-                <!-- Project Content -->
-                <div class="p-6">
-                  <div class="flex items-start justify-between mb-2">
-                    <h3 class="text-xl font-semibold flex-1">{{ project.name }}</h3>
-                    <span 
-                      :class="[
-                        'px-2 py-1 text-xs font-semibold rounded capitalize',
-                        getStatusColor(project.status)
-                      ]"
-                    >
-                      {{ project.status }}
-                    </span>
-                  </div>
-                  
-                  <p v-if="project.description" class="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {{ project.description }}
-                  </p>
-
-                  <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <span class="px-2 py-1 bg-gray-100 rounded capitalize">
-                      {{ project.userRole }}
-                    </span>
-                    <span>•</span>
-                    <span>{{ new Date(project.created).toLocaleDateString() }}</span>
-                  </div>
-                </div>
+                <h3 class="text-lg font-medium text-gray-900">{{ project.name }}</h3>
               </NuxtLink>
             </div>
 
-            <!-- Quick Actions Footer -->
-            <div v-if="filteredProjects.length > 0 || (projects.length > 0 && showArchived)" class="mt-12 pt-8 border-t border-gray-200">
-              <div class="flex flex-col items-center gap-4">
-                <NuxtLink 
-                  v-if="outpost"
-                  :to="`/${outpost.id}/members`"
-                >
-                  <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Manage Team
-                  </button>
-                </NuxtLink>
-                
-                <!-- Show Archived Toggle -->
-                <button
-                  @click="showArchived = !showArchived"
-                  :class="[
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                    showArchived 
-                      ? 'bg-gray-200 text-gray-900' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  ]"
-                >
-                  Archived Projects
-                </button>
-              </div>
+            <div v-if="!loading && outpost" class="mt-10 flex justify-center gap-6 text-sm">
+              <NuxtLink 
+                v-if="canCreateProject"
+                :to="`/${outpost.id}/projects/create`"
+                class="text-gray-600 hover:text-gray-900"
+              >
+                New project
+              </NuxtLink>
+              <NuxtLink 
+                :to="`/${outpost.id}/admin`"
+                class="text-gray-600 hover:text-gray-900"
+              >
+                Admin
+              </NuxtLink>
             </div>
           </div>
         </div>
@@ -253,4 +135,3 @@ onMounted(() => {
     </ion-content>
   </ion-page>
 </template>
-

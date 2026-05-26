@@ -49,7 +49,7 @@ const shouldShowBreadcrumbs = computed(() => {
   if (path === '/profile' || path === '/create') return false;
   
   // Show on main app pages (outpost and project pages)
-  return !!path.match(/^\/[^\/]+\/(projects|members|settings)/);
+  return !!path.match(/^\/[^\/]+\/(projects|members|settings|admin)/);
 });
 
 // Map tool types to readable labels
@@ -62,6 +62,7 @@ const toolLabels: Record<string, string> = {
   todos: 'To-dos',
   members: 'Members',
   settings: 'Settings',
+  admin: 'Admin',
   tools: 'Tools',
 };
 
@@ -174,6 +175,9 @@ async function buildBreadcrumbs() {
     } else if (outpostId && pathSegments.includes('settings')) {
       // Outpost settings page
       crumbs.push({ label: 'Settings' });
+    } else if (outpostId && pathSegments.includes('admin')) {
+      // Outpost admin page
+      crumbs.push({ label: 'Admin' });
     }
   } catch (err) {
     console.error('Error building breadcrumbs:', err);

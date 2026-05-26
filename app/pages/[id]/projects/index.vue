@@ -14,7 +14,7 @@ const projects = ref<any[]>([]);
 const outpost = ref<any>(null);
 const loading = ref(true);
 const canCreateProject = ref(false);
-const showArchived = ref(false);
+const showArchived = ref(route.query.archived === 'true');
 
 const filteredProjects = computed(() => {
   if (showArchived.value) {
@@ -41,24 +41,6 @@ async function loadData() {
 onMounted(() => {
   loadData();
 });
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800';
-    case 'archived':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
-function getProjectImage(project: any) {
-  if (project.avatar) {
-    return `${pb.baseUrl}/api/files/${project.collectionId}/${project.id}/${project.avatar}`;
-  }
-  return null;
-}
 
 </script>
 
@@ -116,62 +98,9 @@ function getProjectImage(project: any) {
               v-for="project in filteredProjects"
               :key="project.id"
               :to="`/${outpostId}/projects/${project.id}`"
-              class="block border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+              class="flex min-h-32 items-center rounded-lg border border-gray-200 bg-white p-6 transition-colors hover:border-gray-300"
             >
-              <!-- Project Header with Image/Color -->
-              <div 
-                v-if="project.avatar || project.color"
-                class="h-32 relative"
-                :style="project.color && !project.avatar ? { backgroundColor: project.color } : ''"
-              >
-                <img 
-                  v-if="project.avatar"
-                  :src="getProjectImage(project)"
-                  :alt="project.name"
-                  class="w-full h-full object-cover"
-                />
-                <div 
-                  v-else-if="project.color"
-                  class="w-full h-full flex items-center justify-center text-white text-4xl font-bold"
-                >
-                  {{ project.name.charAt(0).toUpperCase() }}
-                </div>
-              </div>
-              <div 
-                v-else
-                class="h-32 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
-              >
-                <span class="text-white text-4xl font-bold">
-                  {{ project.name.charAt(0).toUpperCase() }}
-                </span>
-              </div>
-
-              <!-- Project Content -->
-              <div class="p-6">
-                <div class="flex items-start justify-between mb-2">
-                  <h3 class="text-xl font-semibold flex-1">{{ project.name }}</h3>
-                  <span 
-                    :class="[
-                      'px-2 py-1 text-xs font-semibold rounded capitalize',
-                      getStatusColor(project.status)
-                    ]"
-                  >
-                    {{ project.status }}
-                  </span>
-                </div>
-                
-                <p v-if="project.description" class="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {{ project.description }}
-                </p>
-
-                <div class="flex items-center gap-2 text-xs text-gray-500">
-                  <span class="px-2 py-1 bg-gray-100 rounded capitalize">
-                    {{ project.userRole }}
-                  </span>
-                  <span>•</span>
-                  <span>{{ new Date(project.created).toLocaleDateString() }}</span>
-                </div>
-              </div>
+              <h3 class="text-lg font-medium text-gray-900">{{ project.name }}</h3>
             </NuxtLink>
           </div>
           
@@ -196,4 +125,3 @@ function getProjectImage(project: any) {
     </ion-content>
   </ion-page>
 </template>
-
