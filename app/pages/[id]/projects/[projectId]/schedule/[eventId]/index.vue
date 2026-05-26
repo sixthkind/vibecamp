@@ -301,10 +301,15 @@ function getAvatarUrl(user: any): string {
                 Delete
               </button>
             </div>
+
+            <CommentsSection
+              :project-id="projectId"
+              target-collection="calendar_events"
+              :target-id="eventId"
+            />
           </div>
         </div>
       </CommonContainer>
     </ion-content>
   </ion-page>
 </template>
-

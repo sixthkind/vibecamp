@@ -352,6 +352,12 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
+        <CommentsSection
+          :project-id="projectId"
+          target-collection="docs_items"
+          :target-id="itemId"
+        />
       </div>
     </ion-content>
   </ion-page>
@@ -404,4 +410,3 @@ ion-content {
   text-decoration: underline;
 }
 </style>
-

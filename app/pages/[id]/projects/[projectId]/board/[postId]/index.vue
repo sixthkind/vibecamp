@@ -170,6 +170,12 @@ onMounted(() => {
           <!-- Post Content -->
           <div class="prose max-w-none" v-html="post.content"></div>
         </div>
+
+        <CommentsSection
+          :project-id="projectId"
+          target-collection="board_posts"
+          :target-id="postId"
+        />
       </div>
     </ion-content>
   </ion-page>
