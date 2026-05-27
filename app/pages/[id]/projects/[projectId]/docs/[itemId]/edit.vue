@@ -20,6 +20,7 @@ const loading = ref(true);
 const saving = ref(false);
 const error = ref('');
 const item = ref<any>(null);
+const project = ref<any>(null);
 const title = ref('');
 const description = ref('');
 const content = ref('');
@@ -28,7 +29,7 @@ const trixEditor = ref<any>(null);
 async function loadData() {
   loading.value = true;
   error.value = '';
-  
+
   try {
     // Check permissions
     const canEdit = await canUserPerformOnProject('manage_settings', projectId);
@@ -37,12 +38,14 @@ async function loadData() {
       return;
     }
 
+    project.value = await pb.collection('projects').getOne(projectId);
+
     // Fetch item
     item.value = await pb.collection('docs_items').getOne(itemId);
     title.value = item.value.title;
     description.value = item.value.description || '';
     content.value = item.value.content || '';
-    
+
     // Initialize Trix editor content if it's a document
     if (item.value.type === 'document' && content.value) {
       await nextTick();
@@ -92,12 +95,12 @@ async function handleSave() {
       title: title.value.trim(),
       description: description.value.trim() || null,
     };
-    
+
     // Include content if it's a document
     if (item.value.type === 'document') {
       data.content = content.value;
     }
-    
+
     await pb.collection('docs_items').update(itemId, data);
 
     goBack();
@@ -145,76 +148,81 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else class="max-w-3xl mx-auto py-6 px-4 pt-20">
-        <!-- Title Input -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Title
-          </label>
-          <input
-            v-model="title"
-            type="text"
-            placeholder="Enter title..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+      <CommonProjectObjectPaperStack
+        v-else
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Docs & Files"
+        :parent-path="`/${outpostId}/projects/${projectId}/docs`"
+      >
+        <div class="mx-auto max-w-3xl px-6 py-8">
+          <!-- Title Input -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Title
+            </label>
+            <input
+              v-model="title"
+              type="text"
+              placeholder="Enter title..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
 
-        <!-- Description Input -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Description (optional)
-          </label>
-          <textarea
-            v-model="description"
-            placeholder="Add a description..."
-            rows="4"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          ></textarea>
-        </div>
+          <!-- Description Input -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              v-model="description"
+              placeholder="Add a description..."
+              rows="4"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            ></textarea>
+          </div>
 
-        <!-- Trix Editor for Documents -->
-        <div v-if="item?.type === 'document'" class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Content
-          </label>
-          <div class="trix-wrapper border border-gray-300 rounded-lg overflow-hidden">
-            <input id="trix-input-edit" type="hidden" v-model="content" />
-            <trix-editor 
-              ref="trixEditor"
-              input="trix-input-edit" 
-              class="trix-content"
-              @trix-change="handleTrixChange"
-            ></trix-editor>
+          <!-- Trix Editor for Documents -->
+          <div v-if="item?.type === 'document'" class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Content
+            </label>
+            <div class="trix-wrapper border border-gray-300 rounded-lg overflow-hidden">
+              <input id="trix-input-edit" type="hidden" v-model="content" />
+              <trix-editor
+                ref="trixEditor"
+                input="trix-input-edit"
+                class="trix-content"
+                @trix-change="handleTrixChange"
+              ></trix-editor>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 pb-6">
+            <button
+              @click="handleCancel"
+              class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleSave"
+              :disabled="!title.trim() || saving"
+              class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <ion-spinner v-if="saving" name="crescent" class="w-4 h-4"></ion-spinner>
+              <span>{{ saving ? 'Saving...' : 'Save Changes' }}</span>
+            </button>
           </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div class="flex gap-3 pb-6">
-          <button
-            @click="handleCancel"
-            class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            @click="handleSave"
-            :disabled="!title.trim() || saving"
-            class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <ion-spinner v-if="saving" name="crescent" class="w-4 h-4"></ion-spinner>
-            <span>{{ saving ? 'Saving...' : 'Save Changes' }}</span>
-          </button>
-        </div>
-      </div>
+      </CommonProjectObjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
 
 <style>
-ion-content {
-  --background: #f9fafb;
-}
-
 /* Trix Editor Customization */
 .trix-wrapper {
   background: white;
@@ -227,7 +235,7 @@ ion-content {
 }
 
 trix-toolbar {
-  background: #f9fafb;
+  background: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
   padding: 0.5rem;
 }
@@ -299,4 +307,3 @@ trix-editor {
   text-decoration: underline;
 }
 </style>
-

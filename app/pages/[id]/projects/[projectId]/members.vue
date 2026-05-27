@@ -17,6 +17,8 @@ definePageMeta({
 });
 
 const route = useRoute();
+const outpostId = String(route.params.id);
+const projectId = String(route.params.projectId);
 
 const project = ref<any>(null);
 const projectMembers = ref<any[]>([]);
@@ -42,9 +44,6 @@ async function loadData() {
   error.value = '';
   
   try {
-    const projectId = String(route.params.projectId);
-    const outpostId = String(route.params.id);
-    
     project.value = await pb.collection('projects').getOne(projectId, {
       expand: 'outpost',
     });
@@ -136,7 +135,11 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content>
-      <CommonContainer>
+      <CommonProjectPaperStack
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+      >
         <div class="max-w-4xl mx-auto py-8 px-4">
           <div class="mb-8">
             <NuxtLink :to="`/${route.params.id}/projects/${route.params.projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
@@ -257,7 +260,7 @@ onMounted(() => {
             </p>
           </div>
         </div>
-      </CommonContainer>
+      </CommonProjectPaperStack>
 
       <!-- Add Member Modal -->
       <div 

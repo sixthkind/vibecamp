@@ -88,6 +88,7 @@ async function buildBreadcrumbs() {
     const itemId = params.itemId as string;
     const eventId = params.eventId as string;
     const postId = params.postId as string;
+    const todoId = params.todoId as string;
 
     // If we have a project, fetch it
     if (projectId) {
@@ -158,6 +159,19 @@ async function buildBreadcrumbs() {
               } catch (err) {
                 console.error('Error fetching board post:', err);
                 crumbs.push({ label: 'Post' });
+              }
+            } else if ((toolType === 'todos' || toolType === 'tasks') && todoId) {
+              crumbs.push({
+                label: toolLabels[toolType],
+                path: `/${outpostId}/projects/${projectId}/${toolType}`,
+              });
+
+              try {
+                const todo = await pb.collection('todo_items').getOne(todoId);
+                crumbs.push({ label: todo.content });
+              } catch (err) {
+                console.error('Error fetching to-do:', err);
+                crumbs.push({ label: 'To-do' });
               }
             } else {
               // Just add the tool name as the current page

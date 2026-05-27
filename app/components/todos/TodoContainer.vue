@@ -1,87 +1,68 @@
 <template>
-  <div class="flex flex-col h-full bg-gray-50">
+  <div class="flex flex-col h-full bg-transparent">
     <!-- Content -->
     <div class="flex-1 overflow-y-auto px-4 py-4 pt-20">
-      <div class="max-w-6xl mx-auto">
-        <!-- Filter and Action Bar -->
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-2">
-            <button
-              @click="showArchived = false"
-              :class="[
-                'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                !showArchived 
-                  ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              ]"
-            >
-              Active
-            </button>
-            <button
-              @click="showArchived = true"
-              :class="[
-                'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                showArchived 
-                  ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              ]"
-            >
-              Archived
-            </button>
-          </div>
-          
-          <button
-            @click="openCreateListModal"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium"
-          >
-            <Icon name="lucide:plus" size="18px" />
-            <span>New List</span>
-          </button>
-        </div>
-        
+      <div class="max-w-3xl mx-auto">
         <!-- Loading State -->
         <div v-if="isLoading" class="flex flex-col items-center justify-center py-16">
           <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading to-do lists...</p>
+          <p class="text-gray-500 mt-4">Loading to-dos...</p>
         </div>
         
         <!-- Empty State -->
-        <div v-else-if="filteredLists.length === 0" class="flex flex-col items-center justify-center py-16">
+        <div v-else-if="activeLists.length === 0" class="flex flex-col items-center justify-center py-16">
           <Icon name="lucide:check-square" size="64px" class="text-gray-300 mb-4" />
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">
-            {{ showArchived ? 'No archived lists' : 'No to-do lists yet' }}
-          </h3>
-          <p class="text-gray-600 mb-6">
-            {{ showArchived 
-              ? 'Archived lists will appear here' 
-              : 'Create your first to-do list to get started' 
-            }}
-          </p>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">No lists yet</h3>
+          <p class="text-gray-600 mb-6">Add your first list to get started.</p>
           <button
-            v-if="!showArchived"
             @click="openCreateListModal"
-            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            class="text-gray-600 hover:text-gray-900"
           >
-            <Icon name="lucide:plus" size="20px" />
-            <span>Create Your First List</span>
+            New list
           </button>
         </div>
         
         <!-- Lists -->
         <div v-else class="space-y-6">
-          <TodoList
-            v-for="list in filteredLists"
+          <div
+            v-for="list in activeLists"
             :key="list.id"
-            :list="list"
-            :items="getItemsForList(list.id)"
-            @edit-list="openEditListModal"
-            @delete-list="confirmDeleteList"
-            @toggle-archive="handleToggleArchive"
-            @add-item="openCreateItemModal"
-            @edit-item="openEditItemModal"
-            @delete-item="confirmDeleteItem"
-            @toggle-complete="handleToggleComplete"
-          />
+            class="rounded-lg border border-transparent bg-white p-6 hover:border-gray-100"
+          >
+            <h2 class="mb-4 text-center text-lg font-semibold text-gray-700">{{ list.name }}</h2>
+
+            <div v-if="getSortedItemsForList(list.id).length > 0" class="divide-y divide-gray-200">
+              <TodoItem
+                v-for="item in getSortedItemsForList(list.id)"
+                :key="item.id"
+                :item="item"
+                @toggle-complete="handleToggleComplete"
+                @edit="openEditItemModal"
+                @delete="confirmDeleteItem"
+              />
+            </div>
+
+            <p v-else class="py-6 text-center text-sm text-gray-500">No to-dos yet</p>
+
+            <div class="mt-4 flex justify-center text-sm">
+              <button
+                @click="openCreateItemModal(list.id)"
+                class="text-gray-600 hover:text-gray-900"
+              >
+                New to-do
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-center gap-6 text-sm">
+            <button
+              @click="openCreateListModal"
+              class="text-gray-600 hover:text-gray-900"
+            >
+              New list
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
@@ -109,7 +90,7 @@ import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/utils/pb';
 import { alertController } from '@ionic/vue';
 import { getProjectMembers } from '~/utils/permissions';
-import TodoList from './TodoList.vue';
+import TodoItem from './TodoItem.vue';
 import CreateListModal from './CreateListModal.vue';
 import CreateItemModal from './CreateItemModal.vue';
 
@@ -153,7 +134,6 @@ const props = defineProps<{
 }>();
 
 const isLoading = ref(true);
-const showArchived = ref(false);
 const lists = ref<TodoListType[]>([]);
 const items = ref<TodoItemType[]>([]);
 const projectMembers = ref<ProjectMember[]>([]);
@@ -169,8 +149,8 @@ const currentListIdForNewItem = ref<string>('');
 
 const currentUserId = computed(() => pb.authStore.record?.id);
 
-const filteredLists = computed(() => {
-  return lists.value.filter(list => list.archived === showArchived.value);
+const activeLists = computed(() => {
+  return lists.value.filter(list => !list.archived);
 });
 
 onMounted(async () => {
@@ -226,6 +206,24 @@ async function fetchProjectMembers() {
 
 function getItemsForList(listId: string): TodoItemType[] {
   return items.value.filter(item => item.todo_list === listId);
+}
+
+function getSortedItemsForList(listId: string): TodoItemType[] {
+  return sortItems(getItemsForList(listId));
+}
+
+function sortItems(todoItems: TodoItemType[]) {
+  return [...todoItems].sort((a, b) => {
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+
+    if (a.position !== undefined && b.position !== undefined) {
+      return a.position - b.position;
+    }
+
+    return new Date(a.created).getTime() - new Date(b.created).getTime();
+  });
 }
 
 // List Modal Functions
@@ -430,4 +428,3 @@ async function confirmDeleteItem(itemId: string) {
   margin-top: 1.5rem;
 }
 </style>
-

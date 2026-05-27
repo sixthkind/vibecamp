@@ -30,11 +30,11 @@ const showDetails = ref(false);
 async function loadData() {
   loading.value = true;
   error.value = '';
-  
+
   try {
     // Fetch project
     project.value = await pb.collection('projects').getOne(projectId);
-    
+
     // Fetch item
     item.value = await pb.collection('docs_items').getOne(itemId, {
       expand: 'created_by',
@@ -79,7 +79,7 @@ function getFileExtension() {
 
 function getFileIcon() {
   const ext = getFileExtension().toLowerCase();
-  
+
   const iconMap: Record<string, string> = {
     'pdf': 'lucide:file-text',
     'doc': 'lucide:file-text',
@@ -94,18 +94,18 @@ function getFileIcon() {
     'zip': 'lucide:file-archive',
     'rar': 'lucide:file-archive',
   };
-  
+
   return iconMap[ext] || 'lucide:file';
 }
 
 function getFileIconColor() {
   const ext = getFileExtension().toLowerCase();
-  
+
   if (['doc', 'docx', 'txt', 'rtf'].includes(ext)) return 'text-blue-500';
   if (['xls', 'xlsx', 'csv'].includes(ext)) return 'text-green-500';
   if (['ppt', 'pptx'].includes(ext)) return 'text-orange-500';
   if (['zip', 'rar'].includes(ext)) return 'text-purple-500';
-  
+
   return 'text-gray-500';
 }
 
@@ -118,9 +118,9 @@ function getCreatorName() {
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit'
@@ -200,174 +200,179 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="item" class="max-w-5xl mx-auto py-6 px-4 pt-20">
-        <!-- Action Buttons at Top -->
-        <div class="flex justify-end gap-2 mb-4">
-          <button
-            v-if="item?.type === 'file'"
-            @click="handleDownload"
-            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-          >
-            <Icon name="lucide:download" size="20px" />
-            <span>Download</span>
-          </button>
-          <button
-            v-if="canManage"
-            @click="handleEdit"
-            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-          >
-            <Icon name="lucide:edit-2" size="20px" />
-            <span>Edit</span>
-          </button>
-          <button
-            v-if="canManage"
-            @click="handleDelete"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-          >
-            <Icon name="lucide:trash-2" size="20px" />
-            <span>Delete</span>
-          </button>
-        </div>
-        <!-- Document Content -->
-        <div v-if="item.type === 'document'" class="bg-white rounded-lg border border-gray-200 p-8 mb-6">
-          <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ item.title }}</h1>
-          <p v-if="item.description" class="text-gray-600 mb-6">{{ item.description }}</p>
-          <div class="prose max-w-none" v-html="item.content"></div>
-        </div>
+      <CommonProjectObjectPaperStack
+        v-else-if="item"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Docs & Files"
+        :parent-path="`/${outpostId}/projects/${projectId}/docs`"
+      >
+        <div class="px-6 py-8">
+          <!-- Action Buttons at Top -->
+          <div class="flex justify-end gap-2 mb-4">
+            <button
+              v-if="item?.type === 'file'"
+              @click="handleDownload"
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+            >
+              <Icon name="lucide:download" size="20px" />
+              <span>Download</span>
+            </button>
+            <button
+              v-if="canManage"
+              @click="handleEdit"
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+            >
+              <Icon name="lucide:edit-2" size="20px" />
+              <span>Edit</span>
+            </button>
+            <button
+              v-if="canManage"
+              @click="handleDelete"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <Icon name="lucide:trash-2" size="20px" />
+              <span>Delete</span>
+            </button>
+          </div>
+          <!-- Document Content -->
+          <div v-if="item.type === 'document'" class="bg-white rounded-lg border border-gray-200 p-8 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ item.title }}</h1>
+            <p v-if="item.description" class="text-gray-600 mb-6">{{ item.description }}</p>
+            <div class="prose max-w-none" v-html="item.content"></div>
+          </div>
 
-        <!-- File Preview -->
-        <div v-else class="mb-6">
-          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <!-- Image Preview -->
-            <div v-if="isImage" class="flex items-center justify-center bg-gray-50 p-8">
-              <img 
-                :src="getFileUrl()" 
-                :alt="item.title" 
-                class="max-w-full max-h-[70vh] object-contain rounded shadow-lg"
+          <!-- File Preview -->
+          <div v-else class="mb-6">
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <!-- Image Preview -->
+              <div v-if="isImage" class="flex items-center justify-center bg-gray-50 p-8">
+                <img
+                  :src="getFileUrl()"
+                  :alt="item.title"
+                  class="max-w-full max-h-[70vh] object-contain rounded shadow-lg"
+                />
+              </div>
+
+              <!-- Video Preview -->
+              <div v-else-if="isVideo" class="flex items-center justify-center bg-gray-900 p-4">
+                <video
+                  :src="getFileUrl()"
+                  controls
+                  class="max-w-full max-h-[70vh] rounded"
+                >
+                  Your browser does not support video playback.
+                </video>
+              </div>
+
+              <!-- PDF Preview -->
+              <div v-else-if="isPDF" class="h-[80vh]">
+                <iframe
+                  :src="getFileUrl()"
+                  class="w-full h-full"
+                  frameborder="0"
+                >
+                  Your browser does not support PDFs. Please download the file to view it.
+                </iframe>
+              </div>
+
+              <!-- Other Files - Icon and Info -->
+              <div v-else class="flex flex-col items-center justify-center p-16 bg-gray-50">
+                <Icon :name="getFileIcon()" size="96px" :class="getFileIconColor()" class="mb-4" />
+                <p class="text-lg font-semibold text-gray-900 mb-2">{{ item.title }}</p>
+                <p class="text-sm text-gray-600 mb-4">{{ getFileExtension() }} File</p>
+                <button
+                  @click="handleDownload"
+                  class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <Icon name="lucide:download" size="20px" />
+                  <span>Download File</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Details Section -->
+          <div class="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden">
+            <button
+              @click="showDetails = !showDetails"
+              class="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <h3 class="text-lg font-semibold text-gray-900">Details</h3>
+              <Icon
+                :name="showDetails ? 'lucide:chevron-up' : 'lucide:chevron-down'"
+                size="20px"
+                class="text-gray-500"
               />
-            </div>
+            </button>
 
-            <!-- Video Preview -->
-            <div v-else-if="isVideo" class="flex items-center justify-center bg-gray-900 p-4">
-              <video 
-                :src="getFileUrl()" 
-                controls 
-                class="max-w-full max-h-[70vh] rounded"
-              >
-                Your browser does not support video playback.
-              </video>
-            </div>
-
-            <!-- PDF Preview -->
-            <div v-else-if="isPDF" class="h-[80vh]">
-              <iframe 
-                :src="getFileUrl()" 
-                class="w-full h-full"
-                frameborder="0"
-              >
-                Your browser does not support PDFs. Please download the file to view it.
-              </iframe>
-            </div>
-
-            <!-- Other Files - Icon and Info -->
-            <div v-else class="flex flex-col items-center justify-center p-16 bg-gray-50">
-              <Icon :name="getFileIcon()" size="96px" :class="getFileIconColor()" class="mb-4" />
-              <p class="text-lg font-semibold text-gray-900 mb-2">{{ item.title }}</p>
-              <p class="text-sm text-gray-600 mb-4">{{ getFileExtension() }} File</p>
-              <button
-                @click="handleDownload"
-                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <Icon name="lucide:download" size="20px" />
-                <span>Download File</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Details Section -->
-        <div class="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden">
-          <button
-            @click="showDetails = !showDetails"
-            class="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-          >
-            <h3 class="text-lg font-semibold text-gray-900">Details</h3>
-            <Icon 
-              :name="showDetails ? 'lucide:chevron-up' : 'lucide:chevron-down'" 
-              size="20px" 
-              class="text-gray-500"
-            />
-          </button>
-          
-          <div 
-            v-show="showDetails" 
-            class="px-6 pb-6 pt-4 space-y-3 border-t border-gray-200 animated fadeInDown"
-          >
-            <div class="flex items-start gap-3">
-              <Icon :name="item.type === 'document' ? 'lucide:file-text' : 'lucide:file'" size="20px" class="text-gray-400 mt-0.5" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">{{ item.type === 'document' ? 'Document' : 'File' }} Name</p>
-                <p class="text-sm text-gray-900">{{ item.title }}</p>
+            <div
+              v-show="showDetails"
+              class="px-6 pb-6 pt-4 space-y-3 border-t border-gray-200 animated fadeInDown"
+            >
+              <div class="flex items-start gap-3">
+                <Icon :name="item.type === 'document' ? 'lucide:file-text' : 'lucide:file'" size="20px" class="text-gray-400 mt-0.5" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-700">{{ item.type === 'document' ? 'Document' : 'File' }} Name</p>
+                  <p class="text-sm text-gray-900">{{ item.title }}</p>
+                </div>
               </div>
-            </div>
 
-            <div v-if="item.description" class="flex items-start gap-3">
-              <Icon name="lucide:align-left" size="20px" class="text-gray-400 mt-0.5" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">Description</p>
-                <p class="text-sm text-gray-900">{{ item.description }}</p>
+              <div v-if="item.description" class="flex items-start gap-3">
+                <Icon name="lucide:align-left" size="20px" class="text-gray-400 mt-0.5" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-700">Description</p>
+                  <p class="text-sm text-gray-900">{{ item.description }}</p>
+                </div>
               </div>
-            </div>
 
-            <div v-if="item.type === 'file'" class="flex items-start gap-3">
-              <Icon name="lucide:file-type" size="20px" class="text-gray-400 mt-0.5" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">File Type</p>
-                <p class="text-sm text-gray-900">{{ getFileExtension() }}</p>
+              <div v-if="item.type === 'file'" class="flex items-start gap-3">
+                <Icon name="lucide:file-type" size="20px" class="text-gray-400 mt-0.5" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-700">File Type</p>
+                  <p class="text-sm text-gray-900">{{ getFileExtension() }}</p>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-start gap-3">
-              <Icon name="lucide:user" size="20px" class="text-gray-400 mt-0.5" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">Created By</p>
-                <p class="text-sm text-gray-900">{{ getCreatorName() }}</p>
+              <div class="flex items-start gap-3">
+                <Icon name="lucide:user" size="20px" class="text-gray-400 mt-0.5" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-700">Created By</p>
+                  <p class="text-sm text-gray-900">{{ getCreatorName() }}</p>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-start gap-3">
-              <Icon name="lucide:calendar" size="20px" class="text-gray-400 mt-0.5" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">Created</p>
-                <p class="text-sm text-gray-900">{{ formatDate(item.created) }}</p>
+              <div class="flex items-start gap-3">
+                <Icon name="lucide:calendar" size="20px" class="text-gray-400 mt-0.5" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-700">Created</p>
+                  <p class="text-sm text-gray-900">{{ formatDate(item.created) }}</p>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-start gap-3">
-              <Icon name="lucide:clock" size="20px" class="text-gray-400 mt-0.5" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">Last Modified</p>
-                <p class="text-sm text-gray-900">{{ formatDate(item.updated) }}</p>
+              <div class="flex items-start gap-3">
+                <Icon name="lucide:clock" size="20px" class="text-gray-400 mt-0.5" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-700">Last Modified</p>
+                  <p class="text-sm text-gray-900">{{ formatDate(item.updated) }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <CommentsSection
-          :project-id="projectId"
-          target-collection="docs_items"
-          :target-id="itemId"
-        />
-      </div>
+          <CommentsSection
+            :project-id="projectId"
+            target-collection="docs_items"
+            :target-id="itemId"
+          />
+        </div>
+      </CommonProjectObjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
 
 <style scoped>
-ion-content {
-  --background: #f9fafb;
-}
-
 /* Style for document content */
 .prose {
   color: #374151;

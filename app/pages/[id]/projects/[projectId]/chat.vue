@@ -80,20 +80,21 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="chatTool" class="h-full">
-        <ChatContainer
-          :projectToolId="chatTool.id"
-          :chatName="chatTool.name"
-          :canManage="canManage"
-        />
-      </div>
+      <CommonProjectPaperStack
+        v-else-if="chatTool"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        full-height
+      >
+        <div class="h-full min-h-0">
+          <ChatContainer
+            :projectToolId="chatTool.id"
+            :chatName="chatTool.name"
+            :canManage="canManage"
+          />
+        </div>
+      </CommonProjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
-
-<style scoped>
-ion-content {
-  --background: #f9fafb;
-}
-</style>
-

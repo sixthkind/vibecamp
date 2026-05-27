@@ -1,7 +1,21 @@
 <template>
-  <div class="flex justify-end">
+  <div class="group flex items-start justify-end gap-2">
+    <button
+      v-if="canManage"
+      @click.stop="$emit('toggleActions', message)"
+      :class="[
+        'mt-2 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-opacity hover:bg-white hover:text-gray-700',
+        actionsOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      ]"
+      title="Message actions"
+      type="button"
+    >
+      <Icon name="lucide:ellipsis" size="18px" />
+    </button>
+
     <div class="max-w-[70%]">
-      <div class="bg-blue-600 text-white rounded-lg px-4 py-2">
+      <div class="relative rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-gray-900">
+        <span class="absolute right-[-5px] top-3 h-3 w-3 rotate-45 border-r border-t border-blue-100 bg-blue-50"></span>
         <div v-if="message.content" class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.content }}</div>
         
         <!-- File attachments -->
@@ -13,7 +27,7 @@
               :alt="file" 
               class="max-w-full rounded-lg"
             />
-            <div v-else class="flex items-center gap-2 p-2 bg-white/20 rounded-lg">
+            <div v-else class="flex items-center gap-2 p-2 bg-white rounded-lg border border-blue-100">
               <Icon name="lucide:file-text" size="20px" />
               <span class="text-sm truncate">{{ file }}</span>
             </div>
@@ -28,7 +42,7 @@
       </div>
 
       <!-- Message actions -->
-      <div v-if="editMode" class="flex gap-2 mt-2 justify-end">
+      <div v-if="actionsOpen" class="flex gap-2 mt-2 justify-end">
         <button 
           @click="$emit('editMessage', message)" 
           class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center gap-1"
@@ -63,10 +77,12 @@ interface Message {
 
 const props = defineProps<{
   message: Message;
-  editMode?: boolean;
+  canManage?: boolean;
+  actionsOpen?: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
+  toggleActions: [message: Message];
   editMessage: [message: Message];
   confirmDelete: [message: Message];
 }>();
@@ -85,5 +101,3 @@ function openFile(filename: string) {
   window.open(getFileURL(filename), '_blank');
 }
 </script>
-
-

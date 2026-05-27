@@ -137,55 +137,60 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="post" class="max-w-5xl mx-auto py-6 px-4 pt-20">
-        <!-- Action Buttons -->
-        <div class="flex justify-end gap-2 mb-4">
-          <button
-            v-if="canManage"
-            @click="handleDelete"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-          >
-            <Icon name="lucide:trash-2" size="20px" />
-            <span>Delete</span>
-          </button>
-        </div>
-
-        <!-- Post Content -->
-        <div class="bg-white rounded-lg border border-gray-200 p-8 mb-6">
-          <!-- Post Header -->
-          <div class="mb-6 pb-6 border-b border-gray-200">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ post.title }}</h1>
-            <div class="flex items-center gap-4 text-sm text-gray-600">
-              <div class="flex items-center gap-2">
-                <Icon name="lucide:user" size="16px" />
-                <span class="font-medium">{{ getAuthorName() }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Icon name="lucide:calendar" size="16px" />
-                <span>{{ formatShortDate(post.created) }}</span>
-              </div>
-            </div>
+      <CommonProjectObjectPaperStack
+        v-else-if="post"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Board"
+        :parent-path="`/${outpostId}/projects/${projectId}/board`"
+      >
+        <div class="px-6 py-8">
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mb-4">
+            <button
+              v-if="canManage"
+              @click="handleDelete"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <Icon name="lucide:trash-2" size="20px" />
+              <span>Delete</span>
+            </button>
           </div>
 
           <!-- Post Content -->
-          <div class="prose max-w-none" v-html="post.content"></div>
-        </div>
+          <div class="bg-white rounded-lg border border-gray-200 p-8 mb-6">
+            <!-- Post Header -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ post.title }}</h1>
+              <div class="flex items-center gap-4 text-sm text-gray-600">
+                <div class="flex items-center gap-2">
+                  <Icon name="lucide:user" size="16px" />
+                  <span class="font-medium">{{ getAuthorName() }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Icon name="lucide:calendar" size="16px" />
+                  <span>{{ formatShortDate(post.created) }}</span>
+                </div>
+              </div>
+            </div>
 
-        <CommentsSection
-          :project-id="projectId"
-          target-collection="board_posts"
-          :target-id="postId"
-        />
-      </div>
+            <!-- Post Content -->
+            <div class="prose max-w-none" v-html="post.content"></div>
+          </div>
+
+          <CommentsSection
+            :project-id="projectId"
+            target-collection="board_posts"
+            :target-id="postId"
+          />
+        </div>
+      </CommonProjectObjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
 
 <style scoped>
-ion-content {
-  --background: #f9fafb;
-}
-
 /* Style for post content */
 .prose {
   color: #374151;

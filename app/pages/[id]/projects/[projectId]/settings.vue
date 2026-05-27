@@ -9,6 +9,8 @@ definePageMeta({
 });
 
 const route = useRoute();
+const outpostId = String(route.params.id);
+const projectId = String(route.params.projectId);
 
 const project = ref<any>(null);
 const outpost = ref<any>(null);
@@ -37,8 +39,6 @@ const statusOptions = [
 
 async function loadProject() {
   try {
-    const projectId = String(route.params.projectId);
-    
     project.value = await pb.collection('projects').getOne(projectId, {
       expand: 'outpost',
     });
@@ -89,7 +89,6 @@ async function updateProject() {
   }
 
   updating.value = true;
-  const projectId = route.params.projectId as string;
   error.value = '';
   success.value = '';
 
@@ -131,8 +130,6 @@ async function deleteProject() {
   }
 
   deleting.value = true;
-  const projectId = route.params.projectId as string;
-  const outpostId = route.params.id as string;
   error.value = '';
 
   try {
@@ -154,7 +151,11 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content>
-      <CommonContainer>
+      <CommonProjectPaperStack
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+      >
         <div class="max-w-2xl mx-auto py-8 px-4">
           <div class="mb-8">
             <NuxtLink :to="`/${route.params.id}/projects/${projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
@@ -321,8 +322,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-      </CommonContainer>
+      </CommonProjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
-

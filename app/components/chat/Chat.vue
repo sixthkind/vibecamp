@@ -3,12 +3,6 @@
     <!-- Chat Header -->
     <div class="chat-header">
       <h2 class="chat-title">{{ chatName }}</h2>
-      <div class="chat-actions">
-        <button v-if="canManage" @click="toggleEditMode" class="action-button" :class="{ active: editMode }">
-          <Icon :name="editMode ? 'lucide:check' : 'lucide:edit-2'" size="18px" />
-          <span>{{ editMode ? 'Done' : 'Edit' }}</span>
-        </button>
-      </div>
     </div>
 
     <!-- Messages Container -->
@@ -43,9 +37,11 @@
         <ChatBubbleSent
           v-if="message.user === currentUserId"
           :message="message"
-          :editMode="editMode"
-          @editMessage="editMessage"
-          @confirmDelete="confirmDelete"
+          :canManage="canManage"
+          :actionsOpen="activeMessageActionsId === message.id"
+          @toggleActions="toggleMessageActions"
+          @editMessage="handleEditMessage"
+          @confirmDelete="handleConfirmDelete"
         />
         <ChatBubbleReceived
           v-else
@@ -152,7 +148,7 @@ const messageInput = ref<HTMLInputElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const newMessage = ref('');
 const messages = ref<ChatMessage[]>([]);
-const editMode = ref(false);
+const activeMessageActionsId = ref<string | null>(null);
 const isSending = ref(false);
 const isLoading = ref(true);
 const isLoadingMore = ref(false);
@@ -337,6 +333,11 @@ async function editMessage(message: ChatMessage) {
   await alert.present();
 }
 
+async function handleEditMessage(message: ChatMessage) {
+  activeMessageActionsId.value = null;
+  await editMessage(message);
+}
+
 async function confirmDelete(message: ChatMessage) {
   const alert = await alertController.create({
     header: 'Delete Message',
@@ -364,8 +365,13 @@ async function confirmDelete(message: ChatMessage) {
   await alert.present();
 }
 
-function toggleEditMode() {
-  editMode.value = !editMode.value;
+async function handleConfirmDelete(message: ChatMessage) {
+  activeMessageActionsId.value = null;
+  await confirmDelete(message);
+}
+
+function toggleMessageActions(message: ChatMessage) {
+  activeMessageActionsId.value = activeMessageActionsId.value === message.id ? null : message.id;
 }
 
 function formatMessageDate(dateString: string): string {
@@ -433,7 +439,7 @@ function getFilePreview(file: File): string {
 
 .chat-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #E5E7EB;
@@ -445,35 +451,6 @@ function getFilePreview(file: File): string {
   font-weight: 600;
   color: #1F2937;
   margin: 0;
-}
-
-.chat-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background-color: #F3F4F6;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  color: #6B7280;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.action-button:hover {
-  background-color: #E5E7EB;
-}
-
-.action-button.active {
-  background-color: #3B82F6;
-  color: white;
-  border-color: #3B82F6;
 }
 
 .messages-container {
@@ -712,5 +689,4 @@ function getFilePreview(file: File): string {
   cursor: not-allowed;
 }
 </style>
-
 

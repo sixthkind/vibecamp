@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
 import { canUserPerformOnProject } from '~/utils/permissions';
@@ -19,6 +19,28 @@ const canManageMembers = ref(false);
 const loading = ref(true);
 const error = ref('');
 const activeTools = ref<any[]>([]);
+const chatPreviews = ref<Record<string, ChatMessage[]>>({});
+const todoPreviews = ref<Record<string, TodoPreviewItem[]>>({});
+
+interface ChatMessage {
+  id: string;
+  project_tool: string;
+  user: string;
+  content: string;
+  files?: string[];
+  created: string;
+  expand?: {
+    user?: any;
+  };
+}
+
+interface TodoPreviewItem {
+  id: string;
+  content: string;
+  completed: boolean;
+}
+
+const currentUserId = computed(() => pb.authStore.record?.id);
 
 async function loadData() {
   loading.value = true;
@@ -36,6 +58,8 @@ async function loadData() {
     
     // Load active tools
     activeTools.value = await getActiveProjectTools(projectId);
+    loadChatPreviews();
+    loadTodoPreviews();
   } catch (err: any) {
     console.error('Error loading project:', err);
     error.value = 'Failed to load project';
@@ -48,13 +72,82 @@ onMounted(() => {
   loadData();
 });
 
+async function loadChatPreviews() {
+  try {
+    const chatTools = activeTools.value.filter(tool => tool.tool_type === 'chat');
+
+    if (chatTools.length === 0) {
+      chatPreviews.value = {};
+      return;
+    }
+
+    const previews = await Promise.all(
+      chatTools.map(async (tool) => {
+        const response = await pb.collection('chat_messages').getList(1, 3, {
+          filter: `project_tool = "${tool.id}"`,
+          sort: '-created',
+          expand: 'user',
+        });
+
+        return [tool.id, response.items.reverse()] as const;
+      })
+    );
+
+    chatPreviews.value = Object.fromEntries(previews);
+  } catch (err) {
+    console.error('Error loading chat previews:', err);
+  }
+}
+
+function getChatPreviewMessages(toolId: string) {
+  return chatPreviews.value[toolId] || [];
+}
+
+function getChatPreviewName(message: ChatMessage) {
+  return message.expand?.user?.name || message.expand?.user?.email?.split('@')[0] || 'Someone';
+}
+
+async function loadTodoPreviews() {
+  try {
+    const todoTools = activeTools.value.filter(tool => tool.tool_type === 'tasks');
+
+    if (todoTools.length === 0) {
+      todoPreviews.value = {};
+      return;
+    }
+
+    const previews = await Promise.all(
+      todoTools.map(async (tool) => {
+        const response = await pb.collection('todo_items').getList(1, 5, {
+          filter: `todo_list.project_tool = "${tool.id}" && completed = false`,
+          sort: 'position,created',
+        });
+
+        return [tool.id, response.items] as const;
+      })
+    );
+
+    todoPreviews.value = Object.fromEntries(previews);
+  } catch (err) {
+    console.error('Error loading todo previews:', err);
+  }
+}
+
+function getTodoPreviewItems(toolId: string) {
+  return todoPreviews.value[toolId] || [];
+}
+
+function hasTileTitle(toolType: string) {
+  return toolType === 'chat' || toolType === 'tasks';
+}
+
 </script>
 
 <template>
   <ion-page>
-    <ion-content>
+    <ion-content class="project-paper-page">
       <CommonContainer>
-        <div class="max-w-6xl mx-auto py-4 px-4">
+        <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-3xl px-6 py-8 sm:px-8">
           <div v-if="loading" class="text-center py-12">
             <ion-spinner></ion-spinner>
             <p class="mt-4 text-gray-600">Loading project...</p>
@@ -66,31 +159,91 @@ onMounted(() => {
 
           <div v-else>
             <!-- Header -->
-            <div class="mb-8">
+            <div class="mb-8 text-center">
               <h1 class="text-3xl font-semibold text-gray-600">{{ project.name }}</h1>
             </div>
 
             <div v-if="activeTools.length > 0" class="mb-8">
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <NuxtLink
+                <div
                   v-for="tool in activeTools"
                   :key="tool.id"
-                  :to="`/${outpost.id}/projects/${project.id}/${tool.tool_type}`"
-                  class="group flex w-full flex-col justify-between rounded-lg border border-gray-200 bg-white p-6 transition-colors hover:border-gray-300"
-                  style="aspect-ratio: 1 / 1;"
+                  class="w-full"
                 >
-                  <div class="tool-icon-wrapper">
-                    <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                      {{ tool.name }}
-                    </h3>
-                    <p class="text-sm text-gray-600">
-                      {{ getToolDescription(tool.tool_type) }}
-                    </p>
-                  </div>
-                </NuxtLink>
+                  <h2 v-if="hasTileTitle(tool.tool_type)" class="mb-2 text-center text-lg font-semibold text-gray-700">
+                    {{ tool.name }}
+                  </h2>
+                  <NuxtLink
+                    :to="`/${outpost.id}/projects/${project.id}/${tool.tool_type}`"
+                    class="group flex w-full flex-col justify-between overflow-hidden rounded-lg border border-transparent bg-white p-6 hover:border-gray-100"
+                    :style="{ aspectRatio: hasTileTitle(tool.tool_type) ? '1 / 0.86' : '1 / 1' }"
+                  >
+                    <div v-if="!hasTileTitle(tool.tool_type)" class="tool-icon-wrapper">
+                      <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
+                    </div>
+                    <div :class="hasTileTitle(tool.tool_type) ? 'space-y-2' : ''">
+                      <h3 v-if="!hasTileTitle(tool.tool_type)" class="text-lg font-semibold text-gray-900 mb-2">
+                        {{ tool.name }}
+                      </h3>
+                      <template v-if="tool.tool_type === 'chat'">
+                      <div
+                        v-for="message in getChatPreviewMessages(tool.id)"
+                        :key="message.id"
+                        :class="[
+                          'flex flex-col',
+                          message.user === currentUserId ? 'items-end' : 'items-start'
+                        ]"
+                      >
+                        <span
+                          v-if="message.user !== currentUserId"
+                          class="mb-1 max-w-[85%] truncate text-[11px] text-gray-400"
+                        >
+                          {{ getChatPreviewName(message) }}
+                        </span>
+                        <div
+                          :class="[
+                            'relative max-w-[85%] rounded-lg border px-3 py-2 text-xs leading-snug',
+                            message.user === currentUserId
+                              ? 'border-blue-100 bg-blue-50 text-gray-800'
+                              : 'border-gray-200 bg-white text-gray-700'
+                          ]"
+                        >
+                          <span
+                            :class="[
+                              'absolute top-2 h-2 w-2 rotate-45',
+                              message.user === currentUserId
+                                ? 'right-[-4px] border-r border-t border-blue-100 bg-blue-50'
+                              : 'left-[-4px] border-b border-l border-gray-200 bg-white'
+                            ]"
+                          ></span>
+                          <span class="block truncate">
+                            {{ message.content || 'Attachment' }}
+                          </span>
+                        </div>
+                      </div>
+                      <p v-if="getChatPreviewMessages(tool.id).length === 0" class="text-sm text-gray-500">
+                        No messages yet
+                      </p>
+                      </template>
+                      <template v-else-if="tool.tool_type === 'tasks'">
+                        <div
+                          v-for="item in getTodoPreviewItems(tool.id)"
+                          :key="item.id"
+                          class="flex items-center gap-3 rounded-lg px-1 py-1.5"
+                        >
+                          <span class="h-4 w-4 flex-shrink-0 rounded border border-gray-300 bg-white"></span>
+                          <span class="truncate text-sm text-gray-700">{{ item.content }}</span>
+                        </div>
+                        <p v-if="getTodoPreviewItems(tool.id).length === 0" class="text-sm text-gray-500">
+                          No to-dos yet
+                        </p>
+                      </template>
+                      <p v-else class="text-sm text-gray-600">
+                        {{ getToolDescription(tool.tool_type) }}
+                      </p>
+                    </div>
+                  </NuxtLink>
+                </div>
               </div>
             </div>
 
@@ -121,6 +274,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
+ion-content.project-paper-page {
+  --background: #f3f4f6;
+}
+
+.project-paper {
+  background: #fbfaf7;
+}
+
 .tool-icon-wrapper {
   width: 48px;
   height: 48px;

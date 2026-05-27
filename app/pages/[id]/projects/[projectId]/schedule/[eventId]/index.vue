@@ -185,21 +185,28 @@ function getAvatarUrl(user: any): string {
 <template>
   <ion-page>
     <ion-content>
-      <CommonContainer>
-        <div class="max-w-3xl mx-auto py-8 px-4">
-          <!-- Loading State -->
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner name="crescent" color="primary"></ion-spinner>
-            <p class="text-gray-500 mt-4">Loading event...</p>
-          </div>
+      <!-- Loading State -->
+      <div v-if="loading" class="text-center py-12">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <p class="text-gray-500 mt-4">Loading event...</p>
+      </div>
 
-          <!-- Error State -->
-          <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {{ error }}
-          </div>
+      <!-- Error State -->
+      <div v-else-if="error" class="mx-auto max-w-3xl p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        {{ error }}
+      </div>
 
+      <CommonProjectObjectPaperStack
+        v-else-if="event"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Schedule"
+        :parent-path="`/${outpostId}/projects/${projectId}/schedule`"
+      >
+        <div class="mx-auto max-w-3xl px-6 py-8">
           <!-- Event Details -->
-          <div v-else-if="event" class="space-y-6">
+          <div class="space-y-6">
             <!-- Header -->
             <div class="bg-white border border-gray-200 rounded-lg p-6">
               <div class="flex items-start justify-between gap-4 mb-4">
@@ -309,7 +316,7 @@ function getAvatarUrl(user: any): string {
             />
           </div>
         </div>
-      </CommonContainer>
+      </CommonProjectObjectPaperStack>
     </ion-content>
   </ion-page>
 </template>

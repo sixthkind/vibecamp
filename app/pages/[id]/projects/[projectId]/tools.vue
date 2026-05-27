@@ -190,7 +190,11 @@ function goBack() {
     </ion-header>
 
     <ion-content>
-      <CommonContainer>
+      <CommonProjectPaperStack
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+      >
         <div class="max-w-4xl mx-auto py-8 px-4">
           <div class="mb-8">
             <h1 class="text-2xl font-bold mb-2">Project Tools</h1>
@@ -290,7 +294,7 @@ function goBack() {
             </div>
           </div>
         </div>
-      </CommonContainer>
+      </CommonProjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
@@ -307,4 +311,3 @@ function goBack() {
   flex-shrink: 0;
 }
 </style>
-

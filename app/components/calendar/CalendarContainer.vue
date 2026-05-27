@@ -1,5 +1,5 @@
 <template>
-  <div class="calendar-container flex flex-col h-full bg-gray-50">
+  <div class="calendar-container flex flex-col h-full bg-transparent">
     <!-- Header -->
     <div class="flex-shrink-0 px-4 py-4 pt-20 bg-white border-b border-gray-200">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -412,4 +412,3 @@ onUnmounted(() => {
   min-height: 0; /* Fix for flex overflow */
 }
 </style>
-

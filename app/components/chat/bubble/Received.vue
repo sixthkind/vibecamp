@@ -8,7 +8,8 @@
         <span class="text-sm font-medium text-gray-700 mt-1">{{ userName }}</span>
       </div>
       
-      <div class="bg-white border border-gray-200 rounded-lg px-4 py-2 ml-10">
+      <div class="relative bg-white border border-gray-200 rounded-lg px-4 py-2 ml-10">
+        <span class="absolute left-[-5px] top-3 h-3 w-3 rotate-45 border-b border-l border-gray-200 bg-white"></span>
         <div v-if="message.content" class="text-[15px] leading-relaxed text-gray-900 whitespace-pre-wrap">{{ message.content }}</div>
         
         <!-- File attachments -->
@@ -97,5 +98,4 @@ function openFile(filename: string) {
   window.open(getFileURL(filename), '_blank');
 }
 </script>
-
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full bg-gray-50">
+  <div class="flex flex-col h-full bg-transparent">
     <!-- Content -->
     <div class="flex-1 overflow-y-auto px-4 py-4 pt-20">
       <div class="max-w-4xl mx-auto">

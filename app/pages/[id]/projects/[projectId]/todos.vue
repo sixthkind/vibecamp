@@ -80,20 +80,20 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="todosTool" class="h-full">
-        <TodoContainer
-          :projectToolId="todosTool.id"
-          :projectId="projectId"
-        />
-      </div>
+      <CommonProjectPaperStack
+        v-else-if="todosTool"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+      >
+        <div class="min-h-screen">
+          <TodoContainer
+            :projectToolId="todosTool.id"
+            :projectId="projectId"
+          />
+        </div>
+      </CommonProjectPaperStack>
     </ion-content>
   </ion-page>
 </template>
-
-<style scoped>
-ion-content {
-  --background: #f9fafb;
-}
-</style>
-
 

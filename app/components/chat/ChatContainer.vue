@@ -1,29 +1,7 @@
 <template>
-  <div class="flex flex-col h-full bg-gray-50">
-    <!-- Header -->
-    <div class="flex-shrink-0 px-4 py-4 pt-20 bg-white border-b border-gray-200">
-      <div class="max-w-4xl mx-auto flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">&nbsp;</h2>
-        <div class="flex items-center gap-2">
-          <button
-            v-if="canManage"
-            @click="toggleEditMode"
-            :class="[
-              'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2',
-              editMode 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            ]"
-          >
-            <Icon :name="editMode ? 'lucide:check' : 'lucide:edit-2'" size="16px" />
-            <span>{{ editMode ? 'Done' : 'Edit' }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
+  <div class="flex flex-col h-full bg-transparent">
     <!-- Messages Container -->
-    <div class="flex-1 overflow-y-auto px-4 py-6" ref="messagesContainer">
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-6" ref="messagesContainer">
       <div class="max-w-4xl mx-auto">
         <!-- Load More Button -->
         <div v-if="hasMoreMessages && !isLoadingMore && !isLoading" class="flex justify-center mb-6">
@@ -58,9 +36,11 @@
           <ChatBubbleSent
             v-if="message.user === currentUserId"
             :message="message"
-            :editMode="editMode"
-            @editMessage="editMessage"
-            @confirmDelete="confirmDelete"
+            :canManage="canManage"
+            :actionsOpen="activeMessageActionsId === message.id"
+            @toggleActions="toggleMessageActions"
+            @editMessage="handleEditMessage"
+            @confirmDelete="handleConfirmDelete"
           />
           <ChatBubbleReceived
             v-else
@@ -188,7 +168,7 @@ const messageInput = ref<HTMLInputElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const newMessage = ref('');
 const messages = ref<ChatMessage[]>([]);
-const editMode = ref(false);
+const activeMessageActionsId = ref<string | null>(null);
 const isSending = ref(false);
 const isLoading = ref(true);
 const isLoadingMore = ref(false);
@@ -377,6 +357,11 @@ async function editMessage(message: ChatMessage) {
   await alert.present();
 }
 
+async function handleEditMessage(message: ChatMessage) {
+  activeMessageActionsId.value = null;
+  await editMessage(message);
+}
+
 async function confirmDelete(message: ChatMessage) {
   const alert = await alertController.create({
     header: 'Delete Message',
@@ -404,8 +389,13 @@ async function confirmDelete(message: ChatMessage) {
   await alert.present();
 }
 
-function toggleEditMode() {
-  editMode.value = !editMode.value;
+async function handleConfirmDelete(message: ChatMessage) {
+  activeMessageActionsId.value = null;
+  await confirmDelete(message);
+}
+
+function toggleMessageActions(message: ChatMessage) {
+  activeMessageActionsId.value = activeMessageActionsId.value === message.id ? null : message.id;
 }
 
 function formatMessageDate(dateString: string): string {
@@ -462,5 +452,3 @@ function getFilePreview(file: File): string {
   return URL.createObjectURL(file);
 }
 </script>
-
-
