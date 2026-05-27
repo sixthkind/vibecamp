@@ -1,6 +1,6 @@
 <template>
   <div class="sticky-top translucent safe-area-top pt-2">
-    <div class="max-w-screen-xl mx-auto px-5">
+    <div class="max-w-5xl mx-auto px-5">
       <header class="flex w-full flex-col lg:flex-row justify-between items-center pb-3">
         <div class="flex w-full items-center justify-between">
 

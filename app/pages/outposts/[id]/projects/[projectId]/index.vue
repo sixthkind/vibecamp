@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
-import { getProjectRole, canUserPerformOnProject } from '~/utils/permissions';
+import { canUserPerformOnProject } from '~/utils/permissions';
 
 
 definePageMeta({
@@ -13,7 +13,6 @@ const route = useRoute();
 
 const project = ref<any>(null);
 const outpost = ref<any>(null);
-const userRole = ref<string | null>(null);
 const canManageSettings = ref(false);
 const canManageMembers = ref(false);
 const loading = ref(true);
@@ -30,7 +29,6 @@ async function loadData() {
       expand: 'outpost',
     });
     outpost.value = project.value.expand?.outpost;
-    userRole.value = await getProjectRole(projectId);
     canManageSettings.value = await canUserPerformOnProject('manage_settings', projectId);
     canManageMembers.value = await canUserPerformOnProject('manage_members', projectId);
   } catch (err: any) {
@@ -44,24 +42,6 @@ async function loadData() {
 onMounted(() => {
   loadData();
 });
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800';
-    case 'archived':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
-function getProjectImage(): string | null {
-  if (project.value?.avatar) {
-    return `${pb.baseUrl}/api/files/${project.value.collectionId}/${project.value.id}/${project.value.avatar}`;
-  }
-  return null;
-}
 
 </script>
 
@@ -82,73 +62,7 @@ function getProjectImage(): string | null {
           <div v-else>
             <!-- Header -->
             <div class="mb-8">
-              <NuxtLink v-if="outpost" :to="`/outposts/${outpost.id}/projects`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
-                <span>←</span> Back to Projects
-              </NuxtLink>
-              
-              <!-- Project Banner -->
-              <div 
-                v-if="project.avatar || project.color"
-                class="h-48 rounded-lg overflow-hidden mb-6 relative"
-                :style="project.color && !project.avatar ? { backgroundColor: project.color } : ''"
-              >
-                  <img 
-                    v-if="project.avatar && getProjectImage()"
-                    :src="getProjectImage() || ''"
-                    :alt="project.name"
-                    class="w-full h-full object-cover"
-                  />
-                <div 
-                  v-else-if="project.color"
-                  class="w-full h-full flex items-center justify-center text-white text-6xl font-bold"
-                >
-                  {{ project.name.charAt(0).toUpperCase() }}
-                </div>
-              </div>
-
-              <div class="flex justify-between items-start">
-                <div>
-                  <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-3xl font-bold">{{ project.name }}</h1>
-                    <span 
-                      :class="[
-                        'px-3 py-1 text-sm font-semibold rounded capitalize',
-                        getStatusColor(project.status)
-                      ]"
-                    >
-                      {{ project.status }}
-                    </span>
-                  </div>
-                  <p v-if="project.description" class="text-gray-600 text-lg mb-2">
-                    {{ project.description }}
-                  </p>
-                  <div class="flex items-center gap-4 text-sm text-gray-500">
-                    <span v-if="userRole" class="px-2 py-1 bg-gray-100 rounded capitalize">
-                      Your role: {{ userRole }}
-                    </span>
-                    <span>Created {{ new Date(project.created).toLocaleDateString() }}</span>
-                  </div>
-                </div>
-                
-                <div class="flex gap-2">
-                  <NuxtLink 
-                    v-if="canManageMembers && outpost"
-                    :to="`/outposts/${outpost.id}/projects/${project.id}/members`"
-                  >
-                    <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                      Members
-                    </button>
-                  </NuxtLink>
-                  <NuxtLink 
-                    v-if="canManageSettings && outpost"
-                    :to="`/outposts/${outpost.id}/projects/${project.id}/settings`"
-                  >
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      Settings
-                    </button>
-                  </NuxtLink>
-                </div>
-              </div>
+              <h1 class="text-3xl font-semibold text-gray-600">{{ project.name }}</h1>
             </div>
 
             <!-- Main Content Area -->
@@ -176,33 +90,12 @@ function getProjectImage(): string | null {
               </div>
             </div>
 
-            <!-- Quick Links -->
-            <div v-if="outpost && project" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <NuxtLink 
-                v-if="canManageMembers"
-                :to="`/outposts/${outpost.id}/projects/${project.id}/members`"
-                class="p-6 border rounded-lg hover:shadow-md transition-shadow"
+            <div v-if="outpost && project && (canManageSettings || canManageMembers)" class="mt-10 flex justify-center text-sm">
+              <NuxtLink
+                :to="`/outposts/${outpost.id}/projects/${project.id}/admin`"
+                class="text-gray-600 hover:text-gray-900"
               >
-                <h3 class="font-semibold text-lg mb-2">Team Members</h3>
-                <p class="text-gray-600 text-sm">Manage who has access to this project</p>
-              </NuxtLink>
-
-              <NuxtLink 
-                v-if="canManageSettings"
-                :to="`/outposts/${outpost.id}/projects/${project.id}/settings`"
-                class="p-6 border rounded-lg hover:shadow-md transition-shadow"
-              >
-                <h3 class="font-semibold text-lg mb-2">Project Settings</h3>
-                <p class="text-gray-600 text-sm">Update project details and configuration</p>
-              </NuxtLink>
-
-              <NuxtLink 
-                v-if="outpost"
-                :to="`/outposts/${outpost.id}/projects`"
-                class="p-6 border rounded-lg hover:shadow-md transition-shadow"
-              >
-                <h3 class="font-semibold text-lg mb-2">All Projects</h3>
-                <p class="text-gray-600 text-sm">View all projects in this outpost</p>
+                Project admin
               </NuxtLink>
             </div>
           </div>
@@ -211,4 +104,3 @@ function getProjectImage(): string | null {
     </ion-content>
   </ion-page>
 </template>
-
