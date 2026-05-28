@@ -1,23 +1,19 @@
 <template>
   <div class="flex flex-col h-full bg-transparent">
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto px-4 py-4 pt-20">
+    <div class="flex-1 overflow-y-auto px-4 py-4">
       <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div
-          class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6"
-        >
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">Message Board</h1>
+        <div class="relative mb-4 flex items-center justify-center">
+          <h1 class="text-2xl font-semibold text-gray-700">{{ toolName }}</h1>
+          <div class="absolute right-0 flex items-center gap-2">
+            <button
+              @click="openNewPostModal"
+              class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
+            >
+              <Icon name="lucide:plus" size="18px" />
+              <span>Post</span>
+            </button>
           </div>
-
-          <button
-            @click="openNewPostModal"
-            class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
-          >
-            <Icon name="lucide:plus" size="18px" />
-            <span>Post</span>
-          </button>
         </div>
         <div v-if="isLoading"></div>
 
@@ -91,6 +87,7 @@ const props = defineProps<{
   projectToolId: string;
   projectId: string;
   canManage: boolean;
+  toolName?: string;
 }>();
 
 const route = useRoute();

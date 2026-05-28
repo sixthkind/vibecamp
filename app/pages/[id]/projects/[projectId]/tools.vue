@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   createProjectTool,
+  updateProjectTool,
   toggleToolActive,
   deleteProjectTool,
   getProjectWithToolPageData,
@@ -32,7 +33,7 @@ const canManage = ref(false);
 const availableToolTypes = [
   { value: 'chat', label: 'Chat', description: 'Real-time group chat for project communication' },
   { value: 'docs', label: 'Docs & Files', description: 'Shared documents and wikis' },
-  { value: 'todos', label: 'To-dos', description: 'Task lists and to-do items' },
+  { value: 'todos', label: 'ToDos', description: 'Task lists and to-do items' },
   { value: 'tasks', label: 'Tasks', description: 'Kanban board for tracking work across columns' },
   { value: 'schedule', label: 'Schedule', description: 'Project calendar and event scheduling' },
   { value: 'board', label: 'Board', description: 'Message board for announcements and updates' },
@@ -133,6 +134,47 @@ async function handleAddTool() {
                 alert('Failed to add tool');
               }
             }
+          }
+        },
+      },
+    ],
+  });
+
+  await alert.present();
+}
+
+async function handleRenameTool(tool: any) {
+  const alert = await alertController.create({
+    header: 'Rename Tool',
+    inputs: [
+      {
+        type: 'text',
+        name: 'name',
+        value: tool.name,
+        placeholder: 'Tool name',
+      },
+    ],
+    buttons: [
+      {
+        text: 'Cancel',
+        role: 'cancel',
+      },
+      {
+        text: 'Save',
+        handler: async (data) => {
+          const name = data.name?.trim();
+          if (!name) {
+            return false;
+          }
+          const updated = await updateProjectTool(tool.id, { name });
+          if (updated) {
+            const index = tools.value.findIndex((t: any) => t.id === tool.id);
+            if (index !== -1) {
+              tools.value[index] = updated;
+            }
+            clearProjectWithToolPageDataCache(projectId);
+          } else {
+            alert('Failed to rename tool');
           }
         },
       },
@@ -256,6 +298,12 @@ function goBack() {
                       ]"
                     >
                       {{ tool.active ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <button
+                      @click="handleRenameTool(tool)"
+                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      Rename
                     </button>
                     <button
                       @click="handleDeleteTool(tool)"

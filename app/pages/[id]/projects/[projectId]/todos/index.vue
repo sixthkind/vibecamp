@@ -30,7 +30,7 @@ async function loadData() {
     canManage.value = data.canManage;
     
     if (!todosTool.value) {
-      error.value = 'To-dos are not available for this project';
+      error.value = 'ToDos are not available for this project';
       return;
     }
   } catch (err: any) {
@@ -85,6 +85,7 @@ onMounted(() => {
           <TodoContainer
             :projectToolId="todosTool.id"
             :projectId="projectId"
+            :toolName="todosTool.name"
           />
         </div>
       </CommonProjectPaperStack>

@@ -134,7 +134,7 @@ onMounted(() => {
         :project="project"
         :outpost-id="outpostId"
         :project-id="projectId"
-        parent-title="To-dos"
+        parent-title="ToDos"
         :parent-path="`/${outpostId}/projects/${projectId}/todos`"
       />
 
@@ -144,7 +144,7 @@ onMounted(() => {
           <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h2>
           <NuxtLink :to="`/${outpostId}/projects/${projectId}/todos`">
             <button class="mt-4 px-6 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100">
-              Back to To-dos
+              Back to ToDos
             </button>
           </NuxtLink>
         </div>
@@ -155,7 +155,7 @@ onMounted(() => {
         :project="project"
         :outpost-id="outpostId"
         :project-id="projectId"
-        parent-title="To-dos"
+        parent-title="ToDos"
         :parent-path="`/${outpostId}/projects/${projectId}/todos`"
       >
         <div class="content-pop-in mx-auto max-w-3xl px-6 py-8">

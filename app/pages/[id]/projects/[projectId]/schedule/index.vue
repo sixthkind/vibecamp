@@ -85,6 +85,7 @@ onMounted(() => {
           <CalendarContainer
             :projectToolId="scheduleTool.id"
             :projectId="projectId"
+            :toolName="scheduleTool.name"
           />
         </div>
       </CommonProjectPaperStack>

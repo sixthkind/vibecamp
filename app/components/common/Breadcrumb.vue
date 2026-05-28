@@ -60,7 +60,7 @@ const toolLabels: Record<string, string> = {
   tasks: 'Tasks',
   schedule: 'Schedule',
   board: 'Board',
-  todos: 'To-dos',
+  todos: 'ToDos',
   members: 'Members',
   settings: 'Settings',
   admin: 'Admin',

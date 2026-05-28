@@ -3,6 +3,7 @@
     <!-- Messages Container -->
     <div class="min-h-0 flex-1 overflow-y-auto px-4 py-6" ref="messagesContainer">
       <div class="max-w-4xl mx-auto">
+        <h1 class="mb-4 text-center text-2xl font-semibold text-gray-700">{{ props.chatName || 'Chat' }}</h1>
         <!-- Load More Button -->
         <div v-if="hasMoreMessages && !isLoadingMore && !isLoading" class="flex justify-center mb-6">
           <button 

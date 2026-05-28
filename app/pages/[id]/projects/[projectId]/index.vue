@@ -277,7 +277,7 @@ function getTodoPreviewGroups(toolId: string): TodoPreviewGroup[] {
 
   for (const item of getTodoPreviewItems(toolId)) {
     const listId = item.todo_list;
-    const listName = item.expand?.todo_list?.name || 'To-dos';
+    const listName = item.expand?.todo_list?.name || 'ToDos';
     const position = item.expand?.todo_list?.position ?? 0;
 
     if (!groups.has(listId)) {

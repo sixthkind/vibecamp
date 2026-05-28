@@ -1,8 +1,9 @@
 <template>
   <div class="flex flex-col h-full bg-transparent">
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto px-4 py-4 pt-20">
+    <div class="flex-1 overflow-y-auto px-4 py-4">
       <div class="max-w-3xl mx-auto">
+        <h1 class="mb-4 text-center text-2xl font-semibold text-gray-700">{{ toolName }}</h1>
         <div v-if="isLoading"></div>
         
         <!-- Empty State -->
@@ -197,6 +198,7 @@ interface ProjectMember {
 const props = defineProps<{
   projectToolId: string;
   projectId: string;
+  toolName?: string;
 }>();
 
 const isLoading = ref(true);

@@ -82,6 +82,7 @@ onMounted(() => {
           <TasksContainer
             :project-tool-id="tasksTool.id"
             :project-id="projectId"
+            :tool-name="tasksTool.name"
           />
         </div>
       </CommonProjectPaperStack>

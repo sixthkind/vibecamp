@@ -1,16 +1,18 @@
 <template>
   <div class="calendar-container flex flex-col h-full bg-transparent">
     <!-- Header -->
-    <div class="flex-shrink-0 px-4 py-4 pt-20 bg-white">
-      <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Schedule</h2>
-        <button
-          @click="openCreateModal"
-          class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
-        >
-          <Icon name="lucide:plus" size="18px" />
-          <span>New Event</span>
-        </button>
+    <div class="flex-shrink-0 px-4 pb-2 bg-white">
+      <div class="max-w-7xl mx-auto relative flex items-center justify-center">
+        <h2 class="text-2xl font-semibold text-gray-700">{{ toolName }}</h2>
+        <div class="absolute right-0 flex items-center gap-2">
+          <button
+            @click="openCreateModal"
+            class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
+          >
+            <Icon name="lucide:plus" size="18px" />
+            <span>New Event</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -63,12 +65,11 @@ import CalendarView from './CalendarView.vue';
 import EventList from './EventList.vue';
 import CreateEventModal from './CreateEventModal.vue';
 
-interface Props {
+const props = defineProps<{
   projectToolId: string;
   projectId: string;
-}
-
-const props = defineProps<Props>();
+  toolName?: string;
+}>();
 
 const router = useRouter();
 const route = useRoute();

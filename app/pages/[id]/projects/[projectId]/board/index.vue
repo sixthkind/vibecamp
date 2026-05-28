@@ -86,6 +86,7 @@ onMounted(() => {
             :projectToolId="boardTool.id"
             :projectId="projectId"
             :canManage="canManage"
+            :toolName="boardTool.name"
           />
         </div>
       </CommonProjectPaperStack>

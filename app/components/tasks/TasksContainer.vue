@@ -1,19 +1,18 @@
 <template>
   <div class="flex h-full min-h-screen flex-col bg-transparent">
-    <div class="flex-1 overflow-hidden px-4 py-4 pt-20">
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
-        <div>
-          <h1 class="text-2xl font-semibold text-gray-700">Tasks</h1>
-          <p class="text-sm text-gray-500">Track work across columns.</p>
+    <div class="flex-1 overflow-hidden px-4 py-4">
+      <div class="relative mb-4 flex items-center justify-center">
+        <h1 class="text-2xl font-semibold text-gray-700">{{ toolName }}</h1>
+        <div class="absolute right-0 flex items-center gap-2">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            @click="createColumn"
+          >
+            <Icon name="lucide:plus" size="18px" />
+            <span>New column</span>
+          </button>
         </div>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-          @click="createColumn"
-        >
-          <Icon name="lucide:plus" size="18px" />
-          <span>New column</span>
-        </button>
       </div>
 
       <div v-if="isLoading"></div>
@@ -274,6 +273,7 @@ interface TaskRecord {
 const props = defineProps<{
   projectToolId: string;
   projectId: string;
+  toolName?: string;
 }>();
 
 const isLoading = ref(true);
