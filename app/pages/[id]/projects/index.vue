@@ -98,7 +98,7 @@ onMounted(() => {
               v-for="project in filteredProjects"
               :key="project.id"
               :to="`/${outpostId}/projects/${project.id}`"
-              class="flex min-h-32 items-center rounded-lg border border-gray-200 bg-white p-6 transition-colors hover:border-gray-300"
+              class="flex min-h-32 items-center justify-center rounded-lg border border-gray-200 bg-white p-6 text-center transition-colors hover:border-gray-300"
             >
               <h3 class="text-lg font-medium text-gray-900">{{ project.name }}</h3>
             </NuxtLink>

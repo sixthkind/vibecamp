@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-start gap-3 p-3 group"
+    class="flex items-start gap-3 px-3 py-1.5 group"
     :class="{ 'opacity-60': item.completed }"
   >
     <!-- Checkbox -->
@@ -36,12 +36,12 @@
         {{ item.content }}
       </NuxtLink>
 
-      <div v-if="item.description" class="text-sm text-gray-600 mt-1 line-clamp-2">
+      <div v-if="item.description" class="text-sm text-gray-600 mt-0.5 line-clamp-2">
         {{ item.description }}
       </div>
 
       <!-- Meta Info -->
-      <div class="flex flex-wrap items-center gap-3 mt-2 text-xs">
+      <div class="flex flex-wrap items-center gap-3 mt-1 text-xs">
         <!-- Assignee -->
         <div v-if="assigneeInfo" class="flex items-center gap-1 text-gray-600">
           <Icon name="lucide:user" size="14px" />

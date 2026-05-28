@@ -23,15 +23,15 @@
         </div>
         
         <!-- Lists -->
-        <div v-else class="space-y-6">
+        <div v-else class="space-y-3">
           <div
             v-for="list in activeLists"
             :key="list.id"
-            class="rounded-lg border border-transparent bg-white p-6 hover:border-gray-100"
+            class="px-6 py-3"
           >
-            <h2 class="mb-4 text-center text-lg font-semibold text-gray-700">{{ list.name }}</h2>
+            <h2 class="mb-2 text-center text-lg font-semibold text-gray-700">{{ list.name }}</h2>
 
-            <div v-if="getSortedItemsForList(list.id).length > 0" class="divide-y divide-gray-200">
+            <div v-if="getSortedItemsForList(list.id).length > 0">
               <TodoItem
                 v-for="item in getSortedItemsForList(list.id)"
                 :key="item.id"
@@ -42,9 +42,9 @@
               />
             </div>
 
-            <p v-else class="py-6 text-center text-sm text-gray-500">No to-dos yet</p>
+            <p v-else class="py-3 text-center text-sm text-gray-500">No to-dos yet</p>
 
-            <div class="mt-4 flex justify-center text-sm">
+            <div class="mt-2 flex justify-center text-sm">
               <button
                 @click="openCreateItemModal(list.id)"
                 class="text-gray-600 hover:text-gray-900"
@@ -54,7 +54,7 @@
             </div>
           </div>
 
-          <div class="mt-6 flex justify-center gap-6 text-sm">
+          <div class="mt-3 flex justify-center gap-6 text-sm">
             <button
               @click="openCreateListModal"
               class="text-gray-600 hover:text-gray-900"

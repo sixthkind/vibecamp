@@ -21,6 +21,8 @@ const error = ref('');
 const activeTools = ref<any[]>([]);
 const chatPreviews = ref<Record<string, ChatMessage[]>>({});
 const todoPreviews = ref<Record<string, TodoPreviewItem[]>>({});
+const docsPreviews = ref<Record<string, DocsPreviewItem[]>>({});
+const calendarPreviews = ref<Record<string, CalendarPreviewDay[]>>({});
 
 interface ChatMessage {
   id: string;
@@ -38,6 +40,20 @@ interface TodoPreviewItem {
   id: string;
   content: string;
   completed: boolean;
+}
+
+interface DocsPreviewItem {
+  id: string;
+  type: 'document' | 'file';
+  title: string;
+  file?: string;
+}
+
+interface CalendarPreviewDay {
+  key: string;
+  label: number | null;
+  hasEvent: boolean;
+  isToday: boolean;
 }
 
 const currentUserId = computed(() => pb.authStore.record?.id);
@@ -60,6 +76,8 @@ async function loadData() {
     activeTools.value = await getActiveProjectTools(projectId);
     loadChatPreviews();
     loadTodoPreviews();
+    loadDocsPreviews();
+    loadCalendarPreviews();
   } catch (err: any) {
     console.error('Error loading project:', err);
     error.value = 'Failed to load project';
@@ -137,8 +155,147 @@ function getTodoPreviewItems(toolId: string) {
   return todoPreviews.value[toolId] || [];
 }
 
+async function loadDocsPreviews() {
+  try {
+    const docsTools = activeTools.value.filter(tool => tool.tool_type === 'docs');
+
+    if (docsTools.length === 0) {
+      docsPreviews.value = {};
+      return;
+    }
+
+    const previews = await Promise.all(
+      docsTools.map(async (tool) => {
+        const response = await pb.collection('docs_items').getList(1, 5, {
+          filter: `project_tool = "${tool.id}"`,
+          sort: 'position,created',
+        });
+
+        return [tool.id, response.items] as const;
+      })
+    );
+
+    docsPreviews.value = Object.fromEntries(previews);
+  } catch (err) {
+    console.error('Error loading docs previews:', err);
+  }
+}
+
+function getDocsPreviewItems(toolId: string) {
+  return docsPreviews.value[toolId] || [];
+}
+
+function getDocsPreviewIcon(item: DocsPreviewItem) {
+  return item.type === 'document' ? 'lucide:file-text' : 'lucide:file';
+}
+
+function formatDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getCalendarPreviewRange() {
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const rangeStart = new Date(monthStart);
+  rangeStart.setDate(rangeStart.getDate() - monthStart.getDay());
+  const rangeEnd = new Date(monthEnd);
+  rangeEnd.setDate(rangeEnd.getDate() + (6 - monthEnd.getDay()));
+
+  return { monthStart, rangeStart, rangeEnd };
+}
+
+function buildCalendarPreviewDays(eventDates = new Set<string>()) {
+  const { monthStart } = getCalendarPreviewRange();
+  const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+  const days: CalendarPreviewDay[] = [];
+
+  for (let i = 0; i < monthStart.getDay(); i += 1) {
+    days.push({
+      key: `blank-${i}`,
+      label: null,
+      hasEvent: false,
+      isToday: false,
+    });
+  }
+
+  const cursor = new Date(monthStart);
+  while (cursor <= monthEnd) {
+    const key = formatDateKey(cursor);
+    days.push({
+      key,
+      label: cursor.getDate(),
+      hasEvent: eventDates.has(key),
+      isToday: isCalendarPreviewToday(cursor),
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return days;
+}
+
+async function loadCalendarPreviews() {
+  try {
+    const scheduleTools = activeTools.value.filter(tool => tool.tool_type === 'schedule');
+
+    if (scheduleTools.length === 0) {
+      calendarPreviews.value = {};
+      return;
+    }
+
+    const { rangeStart, rangeEnd } = getCalendarPreviewRange();
+    const previews = await Promise.all(
+      scheduleTools.map(async (tool) => {
+        const response = await pb.collection('calendar_events').getList(1, 200, {
+          filter: `project_tool = "${tool.id}" && start_date >= "${rangeStart.toISOString()}" && start_date <= "${rangeEnd.toISOString()}"`,
+          sort: 'start_date',
+        });
+        const eventDates = new Set(response.items.map((item: any) => formatDateKey(new Date(item.start_date))));
+
+        return [tool.id, buildCalendarPreviewDays(eventDates)] as const;
+      })
+    );
+
+    calendarPreviews.value = Object.fromEntries(previews);
+  } catch (err) {
+    console.error('Error loading calendar previews:', err);
+  }
+}
+
+function isCalendarPreviewToday(date: Date) {
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
+}
+
+function getCalendarPreviewDays(toolId: string) {
+  return calendarPreviews.value[toolId] || buildCalendarPreviewDays();
+}
+
+const calendarPreviewMonthLabel = computed(() => {
+  return new Date().toLocaleDateString('en-US', { month: 'long' });
+});
+
 function hasTileTitle(toolType: string) {
-  return toolType === 'chat' || toolType === 'tasks';
+  return toolType === 'chat' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule';
+}
+
+function getToolRoute(toolType: string) {
+  return toolType === 'tasks' ? 'todos' : toolType;
+}
+
+function hasPreviewItems(tool: any) {
+  if (tool.tool_type === 'chat') return getChatPreviewMessages(tool.id).length > 0;
+  if (tool.tool_type === 'tasks') return getTodoPreviewItems(tool.id).length > 0;
+  if (tool.tool_type === 'docs') return getDocsPreviewItems(tool.id).length > 0;
+  if (tool.tool_type === 'schedule') return getCalendarPreviewDays(tool.id).length > 0;
+  return false;
 }
 
 </script>
@@ -147,7 +304,7 @@ function hasTileTitle(toolType: string) {
   <ion-page>
     <ion-content class="project-paper-page">
       <CommonContainer>
-        <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-3xl px-6 py-8 sm:px-8">
+        <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-xl px-6 py-8 sm:px-8">
           <div v-if="loading" class="text-center py-12">
             <ion-spinner></ion-spinner>
             <p class="mt-4 text-gray-600">Loading project...</p>
@@ -174,14 +331,18 @@ function hasTileTitle(toolType: string) {
                     {{ tool.name }}
                   </h2>
                   <NuxtLink
-                    :to="`/${outpost.id}/projects/${project.id}/${tool.tool_type}`"
-                    class="group flex w-full flex-col justify-between overflow-hidden rounded-lg border border-transparent bg-white p-6 hover:border-gray-100"
+                    :to="`/${outpost.id}/projects/${project.id}/${getToolRoute(tool.tool_type)}`"
+                    class="group flex w-full flex-col overflow-hidden rounded-lg border border-transparent bg-white p-6 hover:border-gray-100"
+                    :class="hasTileTitle(tool.tool_type) && !hasPreviewItems(tool) ? 'items-center justify-center' : 'justify-between'"
                     :style="{ aspectRatio: hasTileTitle(tool.tool_type) ? '1 / 0.86' : '1 / 1' }"
                   >
                     <div v-if="!hasTileTitle(tool.tool_type)" class="tool-icon-wrapper">
                       <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
                     </div>
-                    <div :class="hasTileTitle(tool.tool_type) ? 'space-y-2' : ''">
+                    <div :class="[
+                      hasTileTitle(tool.tool_type) ? 'space-y-2' : '',
+                      hasTileTitle(tool.tool_type) && !hasPreviewItems(tool) ? 'flex h-full items-center justify-center' : ''
+                    ]">
                       <h3 v-if="!hasTileTitle(tool.tool_type)" class="text-lg font-semibold text-gray-900 mb-2">
                         {{ tool.name }}
                       </h3>
@@ -221,9 +382,9 @@ function hasTileTitle(toolType: string) {
                           </span>
                         </div>
                       </div>
-                      <p v-if="getChatPreviewMessages(tool.id).length === 0" class="text-sm text-gray-500">
-                        No messages yet
-                      </p>
+                      <div v-if="getChatPreviewMessages(tool.id).length === 0" class="flex items-center justify-center">
+                        <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
+                      </div>
                       </template>
                       <template v-else-if="tool.tool_type === 'tasks'">
                         <div
@@ -234,9 +395,47 @@ function hasTileTitle(toolType: string) {
                           <span class="h-4 w-4 flex-shrink-0 rounded border border-gray-300 bg-white"></span>
                           <span class="truncate text-sm text-gray-700">{{ item.content }}</span>
                         </div>
-                        <p v-if="getTodoPreviewItems(tool.id).length === 0" class="text-sm text-gray-500">
-                          No to-dos yet
-                        </p>
+                        <div v-if="getTodoPreviewItems(tool.id).length === 0" class="flex items-center justify-center">
+                          <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
+                        </div>
+                      </template>
+                      <template v-else-if="tool.tool_type === 'docs'">
+                        <div class="grid grid-cols-3 gap-2">
+                          <div
+                            v-for="item in getDocsPreviewItems(tool.id)"
+                            :key="item.id"
+                            class="flex h-24 flex-col items-center rounded-md bg-gray-50 p-2 text-center"
+                          >
+                            <div class="flex h-10 items-center justify-center">
+                              <Icon :name="getDocsPreviewIcon(item)" size="26px" class="flex-shrink-0 text-gray-400" />
+                            </div>
+                            <span class="mt-2 line-clamp-2 w-full text-xs font-medium leading-snug text-gray-700">{{ item.title }}</span>
+                          </div>
+                        </div>
+                        <div v-if="getDocsPreviewItems(tool.id).length === 0" class="flex items-center justify-center">
+                          <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
+                        </div>
+                      </template>
+                      <template v-else-if="tool.tool_type === 'schedule'">
+                        <div>
+                          <p class="mb-2 text-center text-xs font-medium text-gray-400">
+                            {{ calendarPreviewMonthLabel }}
+                          </p>
+                          <div class="grid grid-cols-7 justify-items-center gap-x-2 gap-y-1.5">
+                            <span
+                              v-for="day in getCalendarPreviewDays(tool.id)"
+                              :key="day.key"
+                              :class="[
+                                'flex h-6 w-6 items-center justify-center rounded-full text-[11px] leading-none',
+                                day.label === null ? 'invisible' : '',
+                                day.hasEvent ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-500',
+                                day.isToday ? 'ring-1 ring-blue-200' : ''
+                              ]"
+                            >
+                              {{ day.label }}
+                            </span>
+                          </div>
+                        </div>
                       </template>
                       <p v-else class="text-sm text-gray-600">
                         {{ getToolDescription(tool.tool_type) }}
@@ -288,9 +487,6 @@ ion-content.project-paper-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #EFF6FF;
-  border-radius: 12px;
   flex-shrink: 0;
-  transition: background-color 0.2s;
 }
 </style>

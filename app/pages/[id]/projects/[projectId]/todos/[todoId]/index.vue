@@ -5,7 +5,7 @@ import { alertController } from '@ionic/vue';
 import { pb } from '~/utils/pb';
 
 definePageMeta({
-  middleware: "auth"
+  middleware: "auth",
 });
 
 const route = useRoute();
@@ -28,10 +28,6 @@ const assigneeName = computed(() => {
 const creatorName = computed(() => {
   const creator = todo.value?.expand?.created_by;
   return creator?.name || creator?.email || '';
-});
-
-const listName = computed(() => {
-  return todo.value?.expand?.todo_list?.name || 'To-do';
 });
 
 async function loadData() {
@@ -154,14 +150,7 @@ onMounted(() => {
         :parent-path="`/${outpostId}/projects/${projectId}/todos`"
       >
         <div class="mx-auto max-w-3xl px-6 py-8">
-          <div class="mb-6 flex justify-end gap-2">
-            <button
-              @click="handleToggleComplete"
-              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-            >
-              <Icon :name="todo.completed ? 'lucide:rotate-ccw' : 'lucide:check'" size="20px" />
-              <span>{{ todo.completed ? 'Reopen' : 'Complete' }}</span>
-            </button>
+          <div class="mb-6 flex justify-end">
             <button
               @click="handleDelete"
               class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
@@ -171,16 +160,19 @@ onMounted(() => {
             </button>
           </div>
 
-          <div class="rounded-lg border border-gray-200 bg-white p-8">
-            <div class="mb-6 flex items-start gap-4 border-b border-gray-200 pb-6">
+          <div class="bg-white p-8">
+            <div class="mb-6 flex items-start gap-5">
               <button
                 @click="handleToggleComplete"
-                class="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2"
-                :class="todo.completed ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'"
+                class="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center transition-all"
+                :class="todo.completed ? 'bg-blue-600' : 'bg-white hover:bg-blue-50'"
+                :style="todo.completed
+                  ? 'border: 2px solid #2563eb; border-radius: 4px;'
+                  : 'border: 2px solid #d1d5db; border-radius: 4px;'"
                 type="button"
                 aria-label="Toggle completion"
               >
-                <Icon v-if="todo.completed" name="lucide:check" size="14px" class="text-white" />
+                <Icon v-if="todo.completed" name="lucide:check" size="24px" class="text-white" />
               </button>
               <div class="min-w-0 flex-1">
                 <h1
@@ -189,7 +181,6 @@ onMounted(() => {
                 >
                   {{ todo.content }}
                 </h1>
-                <p class="mt-2 text-sm text-gray-500">{{ listName }}</p>
               </div>
             </div>
 
@@ -211,6 +202,14 @@ onMounted(() => {
                 <span>Created by {{ creatorName }}</span>
               </div>
             </div>
+          </div>
+
+          <div class="mt-6">
+            <CommentsSection
+              :project-id="projectId"
+              target-collection="todo_items"
+              :target-id="todoId"
+            />
           </div>
         </div>
       </CommonProjectObjectPaperStack>

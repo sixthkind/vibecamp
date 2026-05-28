@@ -49,7 +49,7 @@ onMounted(() => {
   <ion-page>
     <ion-content class="project-paper-page">
       <CommonContainer>
-        <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-3xl px-6 py-8 sm:px-8">
+        <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-xl px-6 py-8 sm:px-8">
           <div v-if="loading" class="text-center py-12">
             <ion-spinner></ion-spinner>
             <p class="mt-4 text-gray-600">Loading project...</p>

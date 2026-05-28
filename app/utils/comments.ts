@@ -2,6 +2,7 @@ export const COMMENT_TARGET_COLLECTIONS = {
   boardPosts: 'board_posts',
   docsItems: 'docs_items',
   calendarEvents: 'calendar_events',
+  todoItems: 'todo_items',
 } as const;
 
 export type CommentTargetCollection =
@@ -11,6 +12,7 @@ export const COMMENT_TARGET_LABELS: Record<CommentTargetCollection, string> = {
   board_posts: 'post',
   docs_items: 'item',
   calendar_events: 'event',
+  todo_items: 'to-do',
 };
 
 export function isCommentTargetCollection(value: string): value is CommentTargetCollection {

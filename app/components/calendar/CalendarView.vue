@@ -37,50 +37,27 @@
       </div>
 
       <!-- Calendar Days -->
-      <div class="grid grid-cols-7 gap-1">
+      <div class="grid grid-cols-7 justify-items-center gap-x-1 gap-y-3">
         <button
           v-for="day in calendarDays"
           :key="`${day.date.toISOString()}`"
           @click="selectDate(day.date)"
           :class="[
-            'calendar-day relative p-3 min-h-[80px] rounded-lg border transition-all',
-            day.isCurrentMonth
-              ? 'bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300'
-              : 'bg-gray-50 border-gray-100 text-gray-400',
+            'calendar-day relative flex h-11 w-11 items-center justify-center rounded-full text-sm transition-all',
+            day.eventCount > 0
+              ? 'bg-blue-100 text-blue-700 hover:bg-blue-100'
+              : day.isCurrentMonth
+                ? 'bg-gray-50 text-gray-700 hover:bg-blue-50'
+                : 'bg-transparent text-gray-300',
             isSelectedDate(day.date)
-              ? 'bg-blue-100 border-blue-500 ring-2 ring-blue-500'
+              ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
               : '',
             isToday(day.date) && !isSelectedDate(day.date)
-              ? 'border-blue-400 font-semibold'
+              ? 'font-semibold ring-1 ring-blue-200'
               : ''
           ]"
         >
-          <div class="flex flex-col items-start h-full">
-            <span
-              :class="[
-                'text-sm',
-                isToday(day.date) ? 'text-blue-600 font-bold' : '',
-                day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-              ]"
-            >
-              {{ day.date.getDate() }}
-            </span>
-            
-            <!-- Event Indicators -->
-            <div v-if="day.eventCount > 0" class="mt-auto flex flex-wrap gap-1">
-              <span
-                v-for="i in Math.min(day.eventCount, 3)"
-                :key="i"
-                class="w-1.5 h-1.5 rounded-full bg-blue-600"
-              ></span>
-              <span
-                v-if="day.eventCount > 3"
-                class="text-[10px] text-gray-500 ml-1"
-              >
-                +{{ day.eventCount - 3 }}
-              </span>
-            </div>
-          </div>
+          {{ day.date.getDate() }}
         </button>
       </div>
     </div>
@@ -232,4 +209,3 @@ watch(() => props.selectedDate, (newDate) => {
   transform: scale(0.98);
 }
 </style>
-
