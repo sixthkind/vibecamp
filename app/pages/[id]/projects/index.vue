@@ -64,7 +64,7 @@ onMounted(() => {
                 v-if="canCreateProject"
                 :to="`/${outpostId}/projects/create`"
               >
-                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                   Create Project
                 </button>
               </NuxtLink>
@@ -80,7 +80,7 @@ onMounted(() => {
               v-if="canCreateProject"
               :to="`/${outpostId}/projects/create`"
             >
-              <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                 Create Your First Project
               </button>
             </NuxtLink>

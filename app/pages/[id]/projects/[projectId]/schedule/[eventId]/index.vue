@@ -297,7 +297,7 @@ function getAvatarUrl(user: any): string {
               <button
                 v-if="canEdit"
                 @click="handleEdit"
-                class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                class="flex-1 px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors font-medium"
               >
                 <Icon name="lucide:edit" size="18px" class="inline mr-2 mb-[-3px]" />
                 Edit Event

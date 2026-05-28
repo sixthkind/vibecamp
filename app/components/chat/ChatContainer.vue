@@ -113,7 +113,7 @@
           <!-- Send Button -->
           <button 
             @click="sendMessage" 
-            class="h-10 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]" 
+            class="h-10 px-4 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]"
             :disabled="(!newMessage.trim() && selectedFiles.length === 0) || isSending"
           >
             <ion-spinner v-if="isSending" name="crescent"></ion-spinner>

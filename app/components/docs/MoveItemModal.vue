@@ -95,7 +95,7 @@
           <button
             @click="handleMove"
             :disabled="isMoving || !hasChanged"
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="px-6 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <ion-spinner v-if="isMoving" name="crescent" class="w-4 h-4"></ion-spinner>
             <Icon v-else name="lucide:folder-input" size="16px" />

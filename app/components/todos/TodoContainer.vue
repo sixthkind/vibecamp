@@ -23,7 +23,7 @@
           <div
             v-for="list in activeLists"
             :key="list.id"
-            class="px-6 py-3"
+            class="rounded-lg border border-gray-200 px-6 py-3"
           >
             <h2 class="mb-2 text-center text-lg font-semibold text-gray-700">{{ list.name }}</h2>
 

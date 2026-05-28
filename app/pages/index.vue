@@ -69,7 +69,7 @@ onMounted(() => {
                 </button>
               </NuxtLink>
               <NuxtLink to="/create">
-                <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                   Create Outpost
                 </button>
               </NuxtLink>

@@ -249,7 +249,7 @@ function goBack() {
                         'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
                         tool.active
                           ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
                       ]"
                     >
                       {{ tool.active ? 'Deactivate' : 'Activate' }}
@@ -283,7 +283,7 @@ function goBack() {
               <p class="text-gray-600 mb-6">Add tools to enable collaboration features for this project.</p>
               <button
                 @click="handleAddTool"
-                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Icon name="lucide:plus" size="20px" class="inline mr-2" />
                 Add Your First Tool

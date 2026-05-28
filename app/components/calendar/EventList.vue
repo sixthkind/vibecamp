@@ -15,7 +15,7 @@
       <p class="text-gray-500 text-sm">No events or to-dos for this day</p>
       <button
         @click="$emit('create-event')"
-        class="mt-4 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        class="mt-4 px-4 py-2 text-sm bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
       >
         <Icon name="lucide:plus" size="16px" class="inline mr-1 mb-[-2px]" />
         Add Event

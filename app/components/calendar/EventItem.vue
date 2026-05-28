@@ -165,4 +165,3 @@ function getAvatarUrl(user: any): string {
   border-radius: 9999px 0 0 9999px;
 }
 </style>
-

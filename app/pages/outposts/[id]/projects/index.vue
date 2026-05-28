@@ -70,7 +70,7 @@ onMounted(() => {
                 v-if="canCreateProject"
                 :to="`/outposts/${outpostId}/projects/create`"
               >
-                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                   Create Project
                 </button>
               </NuxtLink>
@@ -85,7 +85,7 @@ onMounted(() => {
                 :class="[
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                   statusFilter === option.value
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gray-50 text-gray-700 border border-gray-200'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 ]"
               >
@@ -102,7 +102,7 @@ onMounted(() => {
               v-if="canCreateProject"
               :to="`/outposts/${outpostId}/projects/create`"
             >
-              <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                 Create Your First Project
               </button>
             </NuxtLink>

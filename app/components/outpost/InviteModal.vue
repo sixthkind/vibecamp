@@ -195,7 +195,7 @@ function handleEmailInput() {
           <button
             type="submit"
             :disabled="inviting || !selectedUser"
-            class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ inviting ? 'Adding...' : 'Add Member' }}
           </button>

@@ -109,6 +109,6 @@ ion-content.project-paper-page {
 }
 
 .project-paper {
-  background: #fbfaf7;
+  background: #fffefa;
 }
 </style>

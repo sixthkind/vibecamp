@@ -33,7 +33,7 @@
         <div class="flex justify-end">
           <button
             type="submit"
-            class="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!newComment.trim() || isPosting || isLoading"
           >
             Comment

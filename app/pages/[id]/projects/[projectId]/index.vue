@@ -382,7 +382,7 @@ function hasPreviewItems(tool: any) {
                   </h2>
                   <NuxtLink
                     :to="`/${outpost.id}/projects/${project.id}/${getToolRoute(tool.tool_type)}`"
-                    class="group flex w-full flex-col overflow-hidden rounded-lg border border-transparent bg-white p-6 hover:border-gray-100"
+                    class="group flex w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-transparent p-6 hover:border-gray-200"
                     :class="hasTileTitle(tool.tool_type) && !hasPreviewItems(tool) ? 'items-center justify-center' : 'justify-between'"
                     :style="{ aspectRatio: hasTileTitle(tool.tool_type) ? '1 / 0.86' : '1 / 1' }"
                   >
@@ -548,7 +548,7 @@ ion-content.project-paper-page {
 }
 
 .project-paper {
-  background: #fbfaf7;
+  background: #fffefa;
 }
 
 .tool-icon-wrapper {

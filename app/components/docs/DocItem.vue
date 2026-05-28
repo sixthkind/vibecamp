@@ -1,23 +1,23 @@
 <template>
   <div
-    class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative"
+    class="bg-white border-2 border-gray-200 rounded-lg p-4 cursor-pointer relative"
     @click="$emit('click')"
   >
     <!-- Item Icon/Preview -->
     <div class="flex flex-col items-center text-center mb-3">
       <div v-if="item.type === 'document'" class="relative">
-        <Icon name="lucide:file-text" size="48px" class="text-blue-500 mb-2 group-hover:scale-110 transition-transform" />
+        <Icon name="lucide:file-text" size="48px" class="text-blue-500 mb-2" />
       </div>
       <div v-else-if="isImageFile" class="relative w-full h-32 mb-2 rounded overflow-hidden bg-gray-100">
         <img 
           :src="getFileUrl()" 
           :alt="item.title" 
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          class="w-full h-full object-cover"
           @error="handleImageError"
         />
       </div>
       <div v-else class="relative">
-        <Icon :name="getFileIcon()" size="48px" :class="getFileIconColor()" class="mb-2 group-hover:scale-110 transition-transform" />
+        <Icon :name="getFileIcon()" size="48px" :class="getFileIconColor()" class="mb-2" />
       </div>
     </div>
 
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Actions Menu -->
-    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div class="absolute top-2 right-2">
       <button
         @click.stop="toggleMenu"
         class="bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors"
@@ -250,4 +250,3 @@ if (typeof window !== 'undefined') {
 <style scoped>
 /* Additional custom styles if needed */
 </style>
-

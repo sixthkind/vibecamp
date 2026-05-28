@@ -6,7 +6,7 @@
         <h2 class="text-xl font-semibold text-gray-900">Schedule</h2>
         <button
           @click="openCreateModal"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium"
+          class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
         >
           <Icon name="lucide:plus" size="18px" />
           <span>New Event</span>

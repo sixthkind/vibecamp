@@ -197,7 +197,7 @@ onMounted(() => {
           <Icon name="lucide:alert-circle" size="48px" class="text-red-500 mx-auto mb-4" />
           <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h2>
           <NuxtLink :to="`/${outpostId}/projects/${projectId}/docs`">
-            <button class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button class="mt-4 px-6 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100">
               Back to Docs & Files
             </button>
           </NuxtLink>
@@ -288,7 +288,7 @@ onMounted(() => {
                 <p class="text-sm text-gray-600 mb-4">{{ getFileExtension() }} File</p>
                 <button
                   @click="handleDownload"
-                  class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
                 >
                   <Icon name="lucide:download" size="20px" />
                   <span>Download File</span>

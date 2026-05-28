@@ -41,7 +41,7 @@ onMounted(() => {
           <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold">Your Outposts</h1>
             <NuxtLink to="/create">
-              <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                 Create Outpost
               </button>
             </NuxtLink>
@@ -52,7 +52,7 @@ onMounted(() => {
           <div v-else-if="outposts.length === 0" class="text-center py-12">
             <p class="text-gray-600 mb-4">You don't belong to any outposts yet.</p>
             <NuxtLink to="/create">
-              <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                 Create Your First Outpost
               </button>
             </NuxtLink>

@@ -4,36 +4,46 @@
     <div class="flex-1 overflow-y-auto px-4 py-4 pt-20">
       <div class="max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6"
+        >
           <div>
             <h1 class="text-2xl font-bold text-gray-900">Message Board</h1>
-            <p class="text-gray-600 text-sm mt-1">Share announcements and updates with your team</p>
           </div>
-          
+
           <button
             @click="openNewPostModal"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium"
+            class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
           >
             <Icon name="lucide:plus" size="18px" />
-            <span>New Post</span>
+            <span>Post</span>
           </button>
         </div>
         <div v-if="isLoading"></div>
-        
+
         <!-- Empty State -->
-        <div v-else-if="posts.length === 0" class="flex flex-col items-center justify-center py-16">
-          <Icon name="lucide:message-circle" size="64px" class="text-gray-300 mb-4" />
+        <div
+          v-else-if="posts.length === 0"
+          class="flex flex-col items-center justify-center py-16"
+        >
+          <Icon
+            name="lucide:message-circle"
+            size="64px"
+            class="text-gray-300 mb-4"
+          />
           <h3 class="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
-          <p class="text-gray-600 mb-6">Be the first to share an announcement or update</p>
+          <p class="text-gray-600 mb-6">
+            Be the first to share an announcement or update
+          </p>
           <button
             @click="openNewPostModal"
-            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
           >
             <Icon name="lucide:plus" size="20px" />
             <span>Create Your First Post</span>
           </button>
         </div>
-        
+
         <!-- Posts List -->
         <div v-else class="space-y-4">
           <PostItem
@@ -58,12 +68,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { pb } from '~/utils/pb';
-import { alertController } from '@ionic/vue';
-import PostItem from './PostItem.vue';
-import PostEditor from './PostEditor.vue';
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRoute } from "vue-router";
+import { pb } from "~/utils/pb";
+import { alertController } from "@ionic/vue";
+import PostItem from "./PostItem.vue";
+import PostEditor from "./PostEditor.vue";
 
 interface BoardPost {
   id: string;
@@ -94,21 +104,23 @@ const editingPost = ref<BoardPost | null>(null);
 // Methods
 async function loadData() {
   isLoading.value = true;
-  
+
   try {
     // Load posts
-    const postsData = await pb.collection('board_posts').getFullList<BoardPost>({
-      filter: `project_tool = "${props.projectToolId}"`,
-      sort: '-created',
-      expand: 'created_by',
-    });
+    const postsData = await pb
+      .collection("board_posts")
+      .getFullList<BoardPost>({
+        filter: `project_tool = "${props.projectToolId}"`,
+        sort: "-created",
+        expand: "created_by",
+      });
     posts.value = postsData;
   } catch (error) {
-    console.error('Error loading posts:', error);
+    console.error("Error loading posts:", error);
     const errorAlert = await alertController.create({
-      header: 'Error',
-      message: 'Failed to load posts',
-      buttons: ['OK'],
+      header: "Error",
+      message: "Failed to load posts",
+      buttons: ["OK"],
     });
     await errorAlert.present();
   } finally {
@@ -140,17 +152,19 @@ let postsUnsubscribe: (() => void) | null = null;
 
 onMounted(async () => {
   await loadData();
-  
+
   // Subscribe to realtime updates
   try {
-    postsUnsubscribe = await pb.collection('board_posts').subscribe('*', (e) => {
-      console.log('Board posts update:', e.action, e.record);
-      if (e.record.project_tool === props.projectToolId) {
-        loadData();
-      }
-    });
+    postsUnsubscribe = await pb
+      .collection("board_posts")
+      .subscribe("*", (e) => {
+        console.log("Board posts update:", e.action, e.record);
+        if (e.record.project_tool === props.projectToolId) {
+          loadData();
+        }
+      });
   } catch (error) {
-    console.error('Error subscribing to realtime updates:', error);
+    console.error("Error subscribing to realtime updates:", error);
   }
 });
 

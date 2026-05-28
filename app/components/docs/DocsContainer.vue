@@ -34,8 +34,8 @@
               @click="filterType = 'all'"
               :class="[
                 'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                filterType === 'all' 
-                  ? 'bg-blue-600 text-white shadow-sm' 
+                filterType === 'all'
+                  ? 'bg-gray-50 text-gray-700 border border-gray-200 shadow-sm'
                   : 'text-gray-700 hover:bg-gray-100'
               ]"
             >
@@ -45,8 +45,8 @@
               @click="filterType = 'document'"
               :class="[
                 'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                filterType === 'document' 
-                  ? 'bg-blue-600 text-white shadow-sm' 
+                filterType === 'document'
+                  ? 'bg-gray-50 text-gray-700 border border-gray-200 shadow-sm'
                   : 'text-gray-700 hover:bg-gray-100'
               ]"
             >
@@ -56,8 +56,8 @@
               @click="filterType = 'file'"
               :class="[
                 'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                filterType === 'file' 
-                  ? 'bg-blue-600 text-white shadow-sm' 
+                filterType === 'file'
+                  ? 'bg-gray-50 text-gray-700 border border-gray-200 shadow-sm'
                   : 'text-gray-700 hover:bg-gray-100'
               ]"
             >
@@ -82,7 +82,7 @@
             </button>
             <button
               @click="openNewDocModal"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm font-medium"
+              class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm font-medium"
             >
               <Icon name="lucide:plus" size="18px" />
               <span class="hidden sm:inline">New Doc</span>
@@ -99,7 +99,7 @@
           <div class="flex gap-3">
             <button
               @click="openNewDocModal"
-              class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              class="px-6 py-3 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
             >
               <Icon name="lucide:plus" size="20px" />
               <span>Create Your First Doc</span>
@@ -115,15 +115,15 @@
               v-for="folder in displayedFolders"
               :key="folder.id"
               @click="navigateToFolder(folder.id)"
-              class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative"
+              class="bg-white border-2 border-gray-200 rounded-lg p-4 cursor-pointer relative"
             >
               <div class="flex flex-col items-center text-center">
-                <Icon name="lucide:folder" size="48px" class="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />
+                <Icon name="lucide:folder" size="48px" class="text-yellow-500 mb-2" />
                 <h3 class="text-sm font-semibold text-gray-900 truncate w-full">{{ folder.name }}</h3>
               </div>
               
               <!-- Actions Menu -->
-              <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="absolute top-2 right-2">
                 <button
                   @click.stop="openFolderMenu(folder)"
                   class="bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors"

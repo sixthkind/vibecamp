@@ -56,7 +56,7 @@
         <button
           @click="handleSubmit"
           :disabled="!formData.name.trim() || isSaving"
-          class="px-5 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          class="px-5 py-2.5 text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           <ion-spinner v-if="isSaving" name="crescent" class="w-4 h-4"></ion-spinner>
           <span v-else>{{ editMode ? 'Save' : 'Create List' }}</span>

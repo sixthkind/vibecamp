@@ -138,7 +138,7 @@ onMounted(() => {
           <Icon name="lucide:alert-circle" size="48px" class="text-red-500 mx-auto mb-4" />
           <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h2>
           <NuxtLink :to="`/${outpostId}/projects/${projectId}/todos`">
-            <button class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button class="mt-4 px-6 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100">
               Back to To-dos
             </button>
           </NuxtLink>
