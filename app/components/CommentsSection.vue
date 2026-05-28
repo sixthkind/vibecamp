@@ -6,12 +6,29 @@
         :key="comment.id"
       >
         <div v-if="index > 0" class="mx-6 my-4 border-t border-gray-200"></div>
-        <div class="space-y-1 px-6">
+        <div
+          :class="[
+            'space-y-1 px-6',
+            comment.kind === 'system' ? 'text-center' : ''
+          ]"
+        >
           <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-            <span class="font-medium text-gray-800">{{ getAuthorName(comment) }}</span>
+            <span
+              :class="[
+                'font-medium',
+                comment.kind === 'system' ? 'text-gray-500' : 'text-gray-800'
+              ]"
+            >
+              {{ comment.kind === 'system' ? 'System' : getAuthorName(comment) }}
+            </span>
             <span class="text-xs text-gray-500">{{ formatDate(comment.created) }}</span>
           </div>
-          <p class="whitespace-pre-wrap break-words text-gray-700">
+          <p
+            :class="[
+              'whitespace-pre-wrap break-words',
+              comment.kind === 'system' ? 'text-sm italic text-gray-500' : 'text-gray-700'
+            ]"
+          >
             {{ comment.content }}
           </p>
         </div>
@@ -55,6 +72,7 @@ interface CommentRecord {
   target_collection: string;
   target_id: string;
   content: string;
+  kind?: 'user' | 'system';
   created_by: string;
   created: string;
   updated: string;
@@ -181,6 +199,7 @@ async function createComment() {
       target_collection: props.targetCollection,
       target_id: props.targetId,
       content,
+      kind: 'user',
       created_by: currentUserId.value,
     });
     newComment.value = '';

@@ -24,6 +24,7 @@ const todoPreviews = ref<Record<string, TodoPreviewItem[]>>({});
 const docsPreviews = ref<Record<string, DocsPreviewItem[]>>({});
 const calendarPreviews = ref<Record<string, CalendarPreviewDay[]>>({});
 const boardPreviews = ref<Record<string, BoardPreviewPost[]>>({});
+const taskPreviews = ref<Record<string, TaskPreviewColumn[]>>({});
 
 interface ChatMessage {
   id: string;
@@ -66,6 +67,13 @@ interface BoardPreviewPost {
   };
 }
 
+interface TaskPreviewColumn {
+  id: string;
+  name: string;
+  color: string;
+  taskCount: number;
+}
+
 const currentUserId = computed(() => pb.authStore.record?.id);
 
 async function loadData() {
@@ -89,6 +97,7 @@ async function loadData() {
     loadDocsPreviews();
     loadCalendarPreviews();
     loadBoardPreviews();
+    loadTaskPreviews();
   } catch (err: any) {
     console.error('Error loading project:', err);
     error.value = 'Failed to load project';
@@ -139,7 +148,7 @@ function getChatPreviewName(message: ChatMessage) {
 
 async function loadTodoPreviews() {
   try {
-    const todoTools = activeTools.value.filter(tool => tool.tool_type === 'tasks');
+    const todoTools = activeTools.value.filter(tool => tool.tool_type === 'todos');
 
     if (todoTools.length === 0) {
       todoPreviews.value = {};
@@ -333,20 +342,86 @@ function getBoardPreviewAuthor(post: BoardPreviewPost) {
   return post.expand?.created_by?.name || post.expand?.created_by?.email?.split('@')[0] || 'Unknown';
 }
 
+async function loadTaskPreviews() {
+  try {
+    const taskTools = activeTools.value.filter(tool => tool.tool_type === 'tasks');
+
+    if (taskTools.length === 0) {
+      taskPreviews.value = {};
+      return;
+    }
+
+    const previews = await Promise.all(
+      taskTools.map(async (tool) => {
+        const [columns, tasks] = await Promise.all([
+          pb.collection('task_columns').getFullList<any>({
+            filter: `project_tool = "${tool.id}" && archived = false`,
+            sort: 'position,created',
+          }),
+          pb.collection('tasks').getFullList<any>({
+            filter: `project_tool = "${tool.id}" && archived = false`,
+          }),
+        ]);
+        const counts = tasks.reduce((acc: Record<string, number>, task: any) => {
+          acc[task.column] = (acc[task.column] || 0) + 1;
+          return acc;
+        }, {});
+
+        return [
+          tool.id,
+          columns.map((column: any) => ({
+            id: column.id,
+            name: column.name,
+            color: column.color,
+            taskCount: counts[column.id] || 0,
+          })),
+        ] as const;
+      })
+    );
+
+    taskPreviews.value = Object.fromEntries(previews);
+  } catch (err) {
+    console.error('Error loading task previews:', err);
+  }
+}
+
+function getTaskPreviewColumns(toolId: string) {
+  return taskPreviews.value[toolId] || [];
+}
+
+function getTaskPreviewColumnStyle(column: TaskPreviewColumn) {
+  const color = /^#[0-9A-Fa-f]{6}$/.test(String(column.color)) ? column.color : '#E5E7EB';
+
+  return {
+    backgroundColor: hexToRgba(color, 0.22),
+    borderColor: hexToRgba(color, 0.75),
+  };
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const value = hex.slice(1);
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
 function hasTileTitle(toolType: string) {
-  return toolType === 'chat' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule' || toolType === 'board';
+  return toolType === 'chat' || toolType === 'todos' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule' || toolType === 'board';
 }
 
 function getToolRoute(toolType: string) {
-  return toolType === 'tasks' ? 'todos' : toolType;
+  return toolType;
 }
 
 function hasPreviewItems(tool: any) {
   if (tool.tool_type === 'chat') return getChatPreviewMessages(tool.id).length > 0;
-  if (tool.tool_type === 'tasks') return getTodoPreviewItems(tool.id).length > 0;
+  if (tool.tool_type === 'todos') return getTodoPreviewItems(tool.id).length > 0;
   if (tool.tool_type === 'docs') return getDocsPreviewItems(tool.id).length > 0;
   if (tool.tool_type === 'schedule') return getCalendarPreviewDays(tool.id).length > 0;
   if (tool.tool_type === 'board') return getBoardPreviewPosts(tool.id).length > 0;
+  if (tool.tool_type === 'tasks') return getTaskPreviewColumns(tool.id).length > 0;
   return false;
 }
 
@@ -436,7 +511,7 @@ function hasPreviewItems(tool: any) {
                         <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
                       </div>
                       </template>
-                      <template v-else-if="tool.tool_type === 'tasks'">
+                      <template v-else-if="tool.tool_type === 'todos'">
                         <div
                           v-for="item in getTodoPreviewItems(tool.id)"
                           :key="item.id"
@@ -507,6 +582,26 @@ function hasPreviewItems(tool: any) {
                           <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
                         </div>
                       </template>
+                      <template v-else-if="tool.tool_type === 'tasks'">
+                        <div
+                          v-if="getTaskPreviewColumns(tool.id).length > 0"
+                          class="task-preview-strip"
+                        >
+                          <div
+                            v-for="column in getTaskPreviewColumns(tool.id)"
+                            :key="column.id"
+                            class="task-preview-column"
+                            :style="getTaskPreviewColumnStyle(column)"
+                          >
+                            <span class="task-preview-label">
+                              {{ column.name }} ({{ column.taskCount }})
+                            </span>
+                          </div>
+                        </div>
+                        <div v-else class="flex items-center justify-center">
+                          <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
+                        </div>
+                      </template>
                       <p v-else class="text-sm text-gray-600">
                         {{ getToolDescription(tool.tool_type) }}
                       </p>
@@ -558,5 +653,44 @@ ion-content.project-paper-page {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.task-preview-strip {
+  display: flex;
+  gap: 0.5rem;
+  height: 13rem;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0.125rem;
+}
+
+.task-preview-column {
+  position: relative;
+  display: flex;
+  min-width: 2.25rem;
+  width: 2.25rem;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 0.375rem;
+}
+
+.task-preview-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11rem;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: #4b5563;
 }
 </style>

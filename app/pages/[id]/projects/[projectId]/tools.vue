@@ -32,7 +32,8 @@ const canManage = ref(false);
 const availableToolTypes = [
   { value: 'chat', label: 'Chat', description: 'Real-time group chat for project communication' },
   { value: 'docs', label: 'Docs & Files', description: 'Shared documents and wikis' },
-  { value: 'tasks', label: 'To-dos', description: 'Task lists and to-do items' },
+  { value: 'todos', label: 'To-dos', description: 'Task lists and to-do items' },
+  { value: 'tasks', label: 'Tasks', description: 'Kanban board for tracking work across columns' },
   { value: 'schedule', label: 'Schedule', description: 'Project calendar and event scheduling' },
   { value: 'board', label: 'Board', description: 'Message board for announcements and updates' },
 ];

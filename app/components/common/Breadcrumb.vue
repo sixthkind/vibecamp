@@ -56,7 +56,7 @@ const shouldShowBreadcrumbs = computed(() => {
 const toolLabels: Record<string, string> = {
   chat: 'Chat',
   docs: 'Docs',
-  tasks: 'To-dos',
+  tasks: 'Tasks',
   schedule: 'Schedule',
   board: 'Board',
   todos: 'To-dos',
@@ -160,7 +160,7 @@ async function buildBreadcrumbs() {
                 console.error('Error fetching board post:', err);
                 crumbs.push({ label: 'Post' });
               }
-            } else if ((toolType === 'todos' || toolType === 'tasks') && todoId) {
+            } else if (toolType === 'todos' && todoId) {
               crumbs.push({
                 label: toolLabels[toolType],
                 path: `/${outpostId}/projects/${projectId}/${toolType}`,

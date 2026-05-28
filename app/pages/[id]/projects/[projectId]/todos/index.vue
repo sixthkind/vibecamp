@@ -29,8 +29,8 @@ async function loadData() {
     // Fetch project
     project.value = await pb.collection('projects').getOne(projectId);
     
-    // Check if todos tool is active (tasks is the tool_type)
-    todosTool.value = await getActiveTool(projectId, 'tasks');
+    // Check if todos tool is active
+    todosTool.value = await getActiveTool(projectId, 'todos');
     
     if (!todosTool.value) {
       error.value = 'To-dos are not available for this project';
