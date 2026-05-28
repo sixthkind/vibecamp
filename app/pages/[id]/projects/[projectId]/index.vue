@@ -23,6 +23,7 @@ const chatPreviews = ref<Record<string, ChatMessage[]>>({});
 const todoPreviews = ref<Record<string, TodoPreviewItem[]>>({});
 const docsPreviews = ref<Record<string, DocsPreviewItem[]>>({});
 const calendarPreviews = ref<Record<string, CalendarPreviewDay[]>>({});
+const boardPreviews = ref<Record<string, BoardPreviewPost[]>>({});
 
 interface ChatMessage {
   id: string;
@@ -56,6 +57,15 @@ interface CalendarPreviewDay {
   isToday: boolean;
 }
 
+interface BoardPreviewPost {
+  id: string;
+  title: string;
+  content: string;
+  expand?: {
+    created_by?: any;
+  };
+}
+
 const currentUserId = computed(() => pb.authStore.record?.id);
 
 async function loadData() {
@@ -78,6 +88,7 @@ async function loadData() {
     loadTodoPreviews();
     loadDocsPreviews();
     loadCalendarPreviews();
+    loadBoardPreviews();
   } catch (err: any) {
     console.error('Error loading project:', err);
     error.value = 'Failed to load project';
@@ -141,7 +152,7 @@ async function loadTodoPreviews() {
           sort: 'position,created',
         });
 
-        return [tool.id, response.items] as const;
+        return [tool.id, response.items as BoardPreviewPost[]] as const;
       })
     );
 
@@ -282,8 +293,47 @@ const calendarPreviewMonthLabel = computed(() => {
   return new Date().toLocaleDateString('en-US', { month: 'long' });
 });
 
+async function loadBoardPreviews() {
+  try {
+    const boardTools = activeTools.value.filter(tool => tool.tool_type === 'board');
+
+    if (boardTools.length === 0) {
+      boardPreviews.value = {};
+      return;
+    }
+
+    const previews = await Promise.all(
+      boardTools.map(async (tool) => {
+        const response = await pb.collection('board_posts').getList(1, 3, {
+          filter: `project_tool = "${tool.id}"`,
+          sort: '-created',
+          expand: 'created_by',
+        });
+
+        return [tool.id, response.items] as const;
+      })
+    );
+
+    boardPreviews.value = Object.fromEntries(previews);
+  } catch (err) {
+    console.error('Error loading board previews:', err);
+  }
+}
+
+function getBoardPreviewPosts(toolId: string) {
+  return boardPreviews.value[toolId] || [];
+}
+
+function getBoardPreviewContent(post: BoardPreviewPost) {
+  return (post.content || '').replace(/<[^>]*>/g, '').trim();
+}
+
+function getBoardPreviewAuthor(post: BoardPreviewPost) {
+  return post.expand?.created_by?.name || post.expand?.created_by?.email?.split('@')[0] || 'Unknown';
+}
+
 function hasTileTitle(toolType: string) {
-  return toolType === 'chat' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule';
+  return toolType === 'chat' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule' || toolType === 'board';
 }
 
 function getToolRoute(toolType: string) {
@@ -295,6 +345,7 @@ function hasPreviewItems(tool: any) {
   if (tool.tool_type === 'tasks') return getTodoPreviewItems(tool.id).length > 0;
   if (tool.tool_type === 'docs') return getDocsPreviewItems(tool.id).length > 0;
   if (tool.tool_type === 'schedule') return getCalendarPreviewDays(tool.id).length > 0;
+  if (tool.tool_type === 'board') return getBoardPreviewPosts(tool.id).length > 0;
   return false;
 }
 
@@ -435,6 +486,26 @@ function hasPreviewItems(tool: any) {
                               {{ day.label }}
                             </span>
                           </div>
+                        </div>
+                      </template>
+                      <template v-else-if="tool.tool_type === 'board'">
+                        <div class="space-y-3">
+                          <div
+                            v-for="post in getBoardPreviewPosts(tool.id)"
+                            :key="post.id"
+                            class="rounded-md bg-gray-50 px-3 py-2"
+                          >
+                            <p class="truncate text-sm font-medium text-gray-700">{{ post.title }}</p>
+                            <p class="mt-0.5 truncate text-[11px] text-gray-400">
+                              {{ getBoardPreviewAuthor(post) }}
+                            </p>
+                            <p v-if="getBoardPreviewContent(post)" class="mt-1 line-clamp-2 text-xs leading-snug text-gray-500">
+                              {{ getBoardPreviewContent(post) }}
+                            </p>
+                          </div>
+                        </div>
+                        <div v-if="getBoardPreviewPosts(tool.id).length === 0" class="flex items-center justify-center">
+                          <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
                         </div>
                       </template>
                       <p v-else class="text-sm text-gray-600">
