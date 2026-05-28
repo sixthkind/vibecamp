@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="handleClose" :initial-breakpoint="0.7" :breakpoints="[0, 0.7, 0.95]">
+  <ion-modal css-class="paper-modal" :is-open="isOpen" @didDismiss="handleClose" :initial-breakpoint="0.7" :breakpoints="[0, 0.7, 0.95]">
     <ion-header>
       <ion-toolbar>
         <ion-title>Move "{{ item?.title }}"</ion-title>

@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="closeModal">
+  <ion-modal css-class="paper-modal" :is-open="isOpen" @didDismiss="closeModal">
     <ion-header>
       <ion-toolbar>
         <ion-title class="text-lg font-semibold">{{ editMode ? 'Edit List' : 'New List' }}</ion-title>

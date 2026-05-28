@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="handleClose" :initial-breakpoint="0.6" :breakpoints="[0, 0.6, 0.9]">
+  <ion-modal css-class="paper-modal" :is-open="isOpen" @didDismiss="handleClose" :initial-breakpoint="0.6" :breakpoints="[0, 0.6, 0.9]">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ folder ? 'Edit Folder' : 'New Folder' }}</ion-title>

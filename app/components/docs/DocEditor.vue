@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="handleDismiss" :initial-breakpoint="1" :breakpoints="[0, 1]">
+  <ion-modal css-class="paper-modal" :is-open="isOpen" @didDismiss="handleDismiss" :initial-breakpoint="1" :breakpoints="[0, 1]">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ item ? 'Edit Document' : 'New Document' }}</ion-title>

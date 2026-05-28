@@ -1,5 +1,6 @@
 <template>
   <ion-modal
+    css-class="paper-modal"
     :is-open="isOpen"
     @did-dismiss="closeModal"
     :initial-breakpoint="1"
@@ -466,4 +467,3 @@ function removeAssignee(memberId: string) {
   formData.value.assignees = formData.value.assignees.filter(id => id !== memberId);
 }
 </script>
-

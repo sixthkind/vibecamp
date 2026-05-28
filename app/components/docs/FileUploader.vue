@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="handleDismiss" :initial-breakpoint="0.9" :breakpoints="[0, 0.9]">
+  <ion-modal css-class="paper-modal" :is-open="isOpen" @didDismiss="handleDismiss" :initial-breakpoint="0.9" :breakpoints="[0, 0.9]">
     <ion-header>
       <ion-toolbar>
         <ion-title>Upload Files</ion-title>

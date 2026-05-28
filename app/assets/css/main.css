@@ -65,6 +65,59 @@
   animation: contentPopIn 220ms ease-out both;
 }
 
+ion-modal.paper-modal {
+  --background: transparent;
+  --width: min(920px, calc(100vw - 32px));
+  --height: min(86vh, 900px);
+  --max-height: calc(100vh - 48px);
+  --border-radius: 12px;
+  --box-shadow: none;
+}
+
+ion-modal.paper-modal::part(content) {
+  background: #fffefa;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+ion-modal.paper-modal ion-header {
+  box-shadow: none;
+}
+
+ion-modal.paper-modal ion-toolbar {
+  --background: #fffefa;
+  --border-width: 0;
+  --color: #4b5563;
+  --padding-start: 24px;
+  --padding-end: 12px;
+}
+
+ion-modal.paper-modal ion-title {
+  color: #4b5563;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+ion-modal.paper-modal ion-content {
+  --background: #fffefa;
+}
+
+ion-modal.paper-modal input,
+ion-modal.paper-modal textarea,
+ion-modal.paper-modal select,
+ion-modal.paper-modal trix-editor {
+  background: #fffefa;
+}
+
+ion-modal.paper-modal input:focus,
+ion-modal.paper-modal textarea:focus,
+ion-modal.paper-modal select:focus,
+ion-modal.paper-modal trix-editor:focus {
+  border-color: #d1d5db !important;
+  box-shadow: 0 0 0 2px rgba(229, 231, 235, 0.8) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .content-pop-in {
     animation-duration: 1ms !important;
