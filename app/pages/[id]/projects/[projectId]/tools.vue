@@ -55,7 +55,9 @@ async function loadData() {
     }
 
     const expandedTools = project.value.expand?.project_tools_via_project;
-    tools.value = Array.isArray(expandedTools) ? expandedTools : [];
+    tools.value = (Array.isArray(expandedTools) ? [...expandedTools] : []).sort(
+      (a: any, b: any) => (a.position || 0) - (b.position || 0)
+    );
   } catch (err: any) {
     console.error('Error loading tools:', err);
     if (err.status === 404) {
@@ -184,6 +186,25 @@ async function handleRenameTool(tool: any) {
   await alert.present();
 }
 
+async function handleMoveTool(index: number, direction: -1 | 1) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= tools.value.length) return;
+
+  const reordered = [...tools.value];
+  const [moved] = reordered.splice(index, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  tools.value = reordered;
+
+  await Promise.all(
+    reordered.map((tool, i) =>
+      updateProjectTool(tool.id, { position: i + 1 })
+    )
+  );
+
+  clearProjectWithToolPageDataCache(projectId);
+}
+
 async function handleDeleteTool(tool: any) {
   const alert = await alertController.create({
     header: 'Remove Tool',
@@ -256,7 +277,7 @@ function goBack() {
             <!-- Tools List -->
             <div class="space-y-4">
               <div
-                v-for="tool in tools"
+                v-for="(tool, toolIndex) in tools"
                 :key="tool.id"
                 class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
               >
@@ -298,6 +319,24 @@ function goBack() {
                       ]"
                     >
                       {{ tool.active ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+                      title="Move up"
+                      :disabled="toolIndex === 0"
+                      @click="handleMoveTool(toolIndex, -1)"
+                    >
+                      <Icon name="lucide:arrow-up" size="15px" />
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+                      title="Move down"
+                      :disabled="toolIndex === tools.length - 1"
+                      @click="handleMoveTool(toolIndex, 1)"
+                    >
+                      <Icon name="lucide:arrow-down" size="15px" />
                     </button>
                     <button
                       @click="handleRenameTool(tool)"

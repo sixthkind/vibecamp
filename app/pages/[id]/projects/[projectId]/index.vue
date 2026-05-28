@@ -4,7 +4,7 @@ import { onIonViewWillEnter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
 import { canRolePerformOnProject, getRoleFromOutpost } from '~/utils/permissions';
-import { getActiveProjectTools, getToolIcon, getToolDescription } from '~/utils/tools';
+import { getActiveProjectTools, getToolIcon, getToolDescription, updateProjectTool } from '~/utils/tools';
 
 
 definePageMeta({
@@ -28,6 +28,8 @@ const boardPreviews = ref<Record<string, BoardPreviewPost[]>>({});
 const taskPreviews = ref<Record<string, TaskPreviewColumn[]>>({});
 const previewReady = ref<Record<string, boolean>>({});
 const previewsLoading = ref(false);
+const draggedToolIndex = ref<number | null>(null);
+const draggedOverToolIndex = ref<number | null>(null);
 
 interface ChatMessage {
   id: string;
@@ -519,6 +521,39 @@ function getTaskPreviewColumns(toolId: string) {
   return taskPreviews.value[toolId] || [];
 }
 
+function handleToolDragStart(index: number) {
+  draggedToolIndex.value = index;
+}
+
+function handleToolDragOver(index: number) {
+  draggedOverToolIndex.value = index;
+}
+
+function handleToolDragLeave() {
+  draggedOverToolIndex.value = null;
+}
+
+async function handleToolDrop() {
+  const fromIndex = draggedToolIndex.value;
+  const toIndex = draggedOverToolIndex.value;
+
+  draggedToolIndex.value = null;
+  draggedOverToolIndex.value = null;
+
+  if (fromIndex === null || toIndex === null || fromIndex === toIndex) return;
+
+  const reordered = [...activeTools.value];
+  const [moved] = reordered.splice(fromIndex, 1);
+  reordered.splice(toIndex, 0, moved);
+  activeTools.value = reordered;
+
+  await Promise.all(
+    reordered.map((tool, i) =>
+      updateProjectTool(tool.id, { position: i + 1 })
+    )
+  );
+}
+
 function hasTileTitle(toolType: string) {
   return toolType === 'chat' || toolType === 'todos' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule' || toolType === 'board';
 }
@@ -560,9 +595,18 @@ function hasPreviewItems(tool: any) {
             <div v-if="activeTools.length > 0" class="mb-8" :aria-busy="previewsLoading ? 'true' : 'false'">
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div
-                  v-for="tool in activeTools"
+                  v-for="(tool, toolIndex) in activeTools"
                   :key="tool.id"
-                  class="w-full"
+                  draggable="true"
+                  class="w-full cursor-grab"
+                  :class="[
+                    draggedToolIndex === toolIndex ? 'opacity-30' : '',
+                    draggedOverToolIndex === toolIndex ? 'ring-2 ring-blue-400 rounded-lg' : '',
+                  ]"
+                  @dragstart="handleToolDragStart(toolIndex)"
+                  @dragover.prevent="handleToolDragOver(toolIndex)"
+                  @dragleave="handleToolDragLeave"
+                  @drop.prevent="handleToolDrop"
                 >
                   <h2 v-if="hasTileTitle(tool.tool_type)" class="mb-2 text-center text-lg font-semibold text-gray-700">
                     {{ tool.name }}

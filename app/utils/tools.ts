@@ -8,6 +8,7 @@ export interface ProjectTool {
   name: string;
   active: boolean;
   settings: Record<string, any>;
+  position?: number;
   created: string;
   updated: string;
 }
@@ -56,7 +57,7 @@ export async function getProjectTools(projectId: string): Promise<ProjectTool[]>
       filter: `project = "${projectId}"`,
       sort: 'created',
     });
-    return tools;
+    return tools.sort((a, b) => (a.position || 0) - (b.position || 0));
   } catch (error) {
     console.error('Error fetching project tools:', error);
     return [];
@@ -72,6 +73,7 @@ export async function getActiveProjectTools(projectId: string): Promise<ProjectT
       filter: `project = "${projectId}" && active = true`,
       sort: 'created',
     });
+    return tools.sort((a, b) => (a.position || 0) - (b.position || 0));
     return tools;
   } catch (error) {
     console.error('Error fetching active project tools:', error);
