@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { pb } from '~/utils/pb';
 import {
-  getProjectTools,
-  canUserManageTool,
   createProjectTool,
   toggleToolActive,
   deleteProjectTool,
+  getProjectWithToolPageData,
+  clearProjectWithToolPageDataCache,
   getToolIcon,
   getToolDescription,
 } from '~/utils/tools';
+import { canRolePerformOnProject, getRoleFromOutpost } from '~/utils/permissions';
 import { alertController } from '@ionic/vue';
 
 definePageMeta({
@@ -43,18 +43,18 @@ async function loadData() {
   error.value = '';
   
   try {
-    project.value = await pb.collection('projects').getOne(projectId, {
-      expand: 'outpost',
-    });
-    
-    canManage.value = await canUserManageTool(projectId);
+    project.value = await getProjectWithToolPageData(projectId);
+
+    const projectRole = getRoleFromOutpost(project.value.expand?.outpost);
+    canManage.value = canRolePerformOnProject('manage_settings', projectRole);
     
     if (!canManage.value) {
       error.value = 'You do not have permission to manage tools for this project';
       return;
     }
 
-    tools.value = await getProjectTools(projectId);
+    const expandedTools = project.value.expand?.project_tools_via_project;
+    tools.value = Array.isArray(expandedTools) ? expandedTools : [];
   } catch (err: any) {
     console.error('Error loading tools:', err);
     if (err.status === 404) {
@@ -65,7 +65,6 @@ async function loadData() {
       error.value = 'Failed to load project tools';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -80,6 +79,7 @@ async function handleToggleActive(tool: any) {
   
   if (success) {
     tool.active = newStatus;
+    clearProjectWithToolPageDataCache(projectId);
   } else {
     alert('Failed to update tool status');
   }
@@ -128,6 +128,7 @@ async function handleAddTool() {
               
               if (newTool) {
                 tools.value.push(newTool);
+                clearProjectWithToolPageDataCache(projectId);
               } else {
                 alert('Failed to add tool');
               }
@@ -157,6 +158,7 @@ async function handleDeleteTool(tool: any) {
           const success = await deleteProjectTool(tool.id);
           if (success) {
             tools.value = tools.value.filter(t => t.id !== tool.id);
+            clearProjectWithToolPageDataCache(projectId);
           } else {
             alert('Failed to remove tool');
           }

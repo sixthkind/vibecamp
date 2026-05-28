@@ -293,19 +293,19 @@ async function loadData() {
   isLoading.value = true;
   
   try {
-    // Load folders
-    const foldersData = await pb.collection('docs_folders').getFullList<DocsFolder>({
-      filter: `project_tool = "${props.projectToolId}"`,
-      sort: 'position,name',
-    });
-    folders.value = foldersData;
+    const [foldersData, itemsData] = await Promise.all([
+      pb.collection('docs_folders').getFullList<DocsFolder>({
+        filter: `project_tool = "${props.projectToolId}"`,
+        sort: 'position,name',
+      }),
+      pb.collection('docs_items').getFullList<DocsItem>({
+        filter: `project_tool = "${props.projectToolId}"`,
+        sort: 'position,created',
+        expand: 'created_by',
+      }),
+    ]);
 
-    // Load items
-    const itemsData = await pb.collection('docs_items').getFullList<DocsItem>({
-      filter: `project_tool = "${props.projectToolId}"`,
-      sort: 'position,created',
-      expand: 'created_by',
-    });
+    folders.value = foldersData;
     items.value = itemsData;
   } catch (error) {
     console.error('Error loading docs & files:', error);

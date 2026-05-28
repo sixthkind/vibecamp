@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb } from '~/utils/pb';
 import { alertController } from '@ionic/vue';
+import { getProjectWithToolPageData } from '~/utils/tools';
 
 definePageMeta({
   middleware: "auth"
@@ -95,13 +96,15 @@ async function loadData() {
   error.value = '';
   
   try {
-    // Fetch project
-    project.value = await pb.collection('projects').getOne(projectId);
-    
-    // Fetch event
-    event.value = await pb.collection('calendar_events').getOne(eventId, {
-      expand: 'assignees,created_by',
-    });
+    const [projectRecord, eventRecord] = await Promise.all([
+      getProjectWithToolPageData(projectId),
+      pb.collection('calendar_events').getOne(eventId, {
+        expand: 'assignees,created_by',
+      }),
+    ]);
+
+    project.value = projectRecord;
+    event.value = eventRecord;
     
     // Check permissions
     const currentUser = pb.authStore.model;
@@ -122,7 +125,6 @@ async function loadData() {
       error.value = 'Failed to load event';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

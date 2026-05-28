@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb } from '~/utils/pb';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { canRolePerformOnProject, getRoleFromOutpost } from '~/utils/permissions';
+import { getProjectWithToolPageData } from '~/utils/tools';
 import { alertController } from '@ionic/vue';
 
 definePageMeta({
@@ -32,13 +33,15 @@ async function loadData() {
   error.value = '';
 
   try {
-    // Fetch project
-    project.value = await pb.collection('projects').getOne(projectId);
+    const [projectRecord, itemRecord] = await Promise.all([
+      getProjectWithToolPageData(projectId),
+      pb.collection('docs_items').getOne(itemId, {
+        expand: 'created_by',
+      }),
+    ]);
 
-    // Fetch item
-    item.value = await pb.collection('docs_items').getOne(itemId, {
-      expand: 'created_by',
-    });
+    project.value = projectRecord;
+    item.value = itemRecord;
 
     // Determine file type
     if (item.value.type === 'file' && item.value.file) {
@@ -48,8 +51,8 @@ async function loadData() {
       isPDF.value = ext === 'pdf';
     }
 
-    // Check if user can manage
-    canManage.value = await canUserPerformOnProject('manage_settings', projectId);
+    const projectRole = getRoleFromOutpost(projectRecord.expand?.outpost);
+    canManage.value = canRolePerformOnProject('manage_settings', projectRole);
   } catch (err: any) {
     console.error('Error loading item:', err);
     if (err.status === 404) {
@@ -60,7 +63,6 @@ async function loadData() {
       error.value = 'Failed to load item';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

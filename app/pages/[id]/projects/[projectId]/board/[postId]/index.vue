@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb } from '~/utils/pb';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { canRolePerformOnProject, getRoleFromOutpost } from '~/utils/permissions';
+import { getProjectWithToolPageData } from '~/utils/tools';
 import { alertController } from '@ionic/vue';
 
 definePageMeta({
@@ -27,16 +28,18 @@ async function loadData() {
   error.value = '';
   
   try {
-    // Fetch project
-    project.value = await pb.collection('projects').getOne(projectId);
-    
-    // Fetch post
-    post.value = await pb.collection('board_posts').getOne(postId, {
-      expand: 'created_by',
-    });
+    const [projectRecord, postRecord] = await Promise.all([
+      getProjectWithToolPageData(projectId),
+      pb.collection('board_posts').getOne(postId, {
+        expand: 'created_by',
+      }),
+    ]);
 
-    // Check if user can manage
-    canManage.value = await canUserPerformOnProject('manage_settings', projectId);
+    project.value = projectRecord;
+    post.value = postRecord;
+
+    const projectRole = getRoleFromOutpost(projectRecord.expand?.outpost);
+    canManage.value = canRolePerformOnProject('manage_settings', projectRole);
   } catch (err: any) {
     console.error('Error loading post:', err);
     if (err.status === 404) {
@@ -47,7 +50,6 @@ async function loadData() {
       error.value = 'Failed to load post';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

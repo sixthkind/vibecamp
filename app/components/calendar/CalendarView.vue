@@ -1,7 +1,7 @@
 <template>
   <div class="calendar-view bg-white rounded-lg shadow-sm border border-gray-200">
     <!-- Calendar Header -->
-    <div class="calendar-header flex items-center justify-between p-4 border-b border-gray-200">
+    <div class="calendar-header flex items-center justify-between p-4">
       <button
         @click="previousMonth"
         class="p-2 hover:bg-gray-100 rounded-lg transition-colors"

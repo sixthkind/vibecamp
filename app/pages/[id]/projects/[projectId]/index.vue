@@ -3,7 +3,7 @@ import { computed, ref, onMounted } from 'vue';
 import { onIonViewWillEnter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { canRolePerformOnProject, getRoleFromOutpost } from '~/utils/permissions';
 import { getActiveProjectTools, getToolIcon, getToolDescription } from '~/utils/tools';
 
 
@@ -27,6 +27,7 @@ const calendarPreviews = ref<Record<string, CalendarPreviewDay[]>>({});
 const boardPreviews = ref<Record<string, BoardPreviewPost[]>>({});
 const taskPreviews = ref<Record<string, TaskPreviewColumn[]>>({});
 const previewReady = ref<Record<string, boolean>>({});
+const previewsLoading = ref(false);
 
 interface ChatMessage {
   id: string;
@@ -42,8 +43,23 @@ interface ChatMessage {
 
 interface TodoPreviewItem {
   id: string;
+  todo_list: string;
   content: string;
   completed: boolean;
+  expand?: {
+    todo_list?: {
+      id: string;
+      name: string;
+      position?: number;
+    };
+  };
+}
+
+interface TodoPreviewGroup {
+  listId: string;
+  listName: string;
+  position: number;
+  items: TodoPreviewItem[];
 }
 
 interface DocsPreviewItem {
@@ -91,29 +107,28 @@ async function loadData(options: { showLoading?: boolean } = {}) {
   
   try {
     const projectId = String(route.params.projectId);
-    
-    project.value = await pb.collection('projects').getOne(projectId, {
-      expand: 'outpost',
-    });
-    outpost.value = project.value.expand?.outpost;
-    canManageSettings.value = await canUserPerformOnProject('manage_settings', projectId);
-    canManageMembers.value = await canUserPerformOnProject('manage_members', projectId);
-    
-    // Load active tools
-    activeTools.value = await getActiveProjectTools(projectId);
-    syncPreviewReady(!hasLoadedOnce);
-    await Promise.all([
-      loadChatPreviews(sequence),
-      loadTodoPreviews(sequence),
-      loadDocsPreviews(sequence),
-      loadCalendarPreviews(sequence),
-      loadBoardPreviews(sequence),
-      loadTaskPreviews(sequence),
+
+    const [projectRecord, tools] = await Promise.all([
+      pb.collection('projects').getOne(projectId, {
+        expand: 'outpost',
+      }),
+      getActiveProjectTools(projectId),
     ]);
 
     if (sequence !== loadSequence) return;
+
+    project.value = projectRecord;
+    outpost.value = projectRecord.expand?.outpost;
+    activeTools.value = tools;
+
+    const projectRole = getRoleFromOutpost(outpost.value);
+    canManageSettings.value = canRolePerformOnProject('manage_settings', projectRole);
+    canManageMembers.value = canRolePerformOnProject('manage_members', projectRole);
+
+    syncPreviewReady(!hasLoadedOnce);
     hasLoadedOnce = true;
     error.value = '';
+    void loadPreviewBatch(sequence);
   } catch (err: any) {
     if (sequence !== loadSequence) return;
     console.error('Error loading project:', err);
@@ -131,12 +146,34 @@ async function loadData(options: { showLoading?: boolean } = {}) {
 }
 
 onMounted(() => {
-  loadData({ showLoading: true });
+  if (loadSequence === 0) {
+    loadData({ showLoading: true });
+  }
 });
 
 onIonViewWillEnter(() => {
+  if (loadSequence > 0 && !hasLoadedOnce) return;
   loadData({ showLoading: !hasLoadedOnce });
 });
+
+async function loadPreviewBatch(sequence: number) {
+  previewsLoading.value = true;
+
+  try {
+    await Promise.all([
+      loadChatPreviews(sequence),
+      loadTodoPreviews(sequence),
+      loadDocsPreviews(sequence),
+      loadCalendarPreviews(sequence),
+      loadBoardPreviews(sequence),
+      loadTaskPreviews(sequence),
+    ]);
+  } finally {
+    if (sequence === loadSequence) {
+      previewsLoading.value = false;
+    }
+  }
+}
 
 function syncPreviewReady(reset: boolean) {
   const next: Record<string, boolean> = {};
@@ -214,9 +251,10 @@ async function loadTodoPreviews(sequence = loadSequence) {
         const response = await pb.collection('todo_items').getList(1, 5, {
           filter: `todo_list.project_tool = "${tool.id}" && completed = false`,
           sort: 'position,created',
+          expand: 'todo_list',
         });
 
-        return [tool.id, response.items as BoardPreviewPost[]] as const;
+        return [tool.id, response.items as TodoPreviewItem[]] as const;
       })
     );
 
@@ -232,6 +270,24 @@ async function loadTodoPreviews(sequence = loadSequence) {
 
 function getTodoPreviewItems(toolId: string) {
   return todoPreviews.value[toolId] || [];
+}
+
+function getTodoPreviewGroups(toolId: string): TodoPreviewGroup[] {
+  const groups = new Map<string, TodoPreviewGroup>();
+
+  for (const item of getTodoPreviewItems(toolId)) {
+    const listId = item.todo_list;
+    const listName = item.expand?.todo_list?.name || 'To-dos';
+    const position = item.expand?.todo_list?.position ?? 0;
+
+    if (!groups.has(listId)) {
+      groups.set(listId, { listId, listName, position, items: [] });
+    }
+
+    groups.get(listId)?.items.push(item);
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.position - b.position);
 }
 
 async function loadDocsPreviews(sequence = loadSequence) {
@@ -463,24 +519,6 @@ function getTaskPreviewColumns(toolId: string) {
   return taskPreviews.value[toolId] || [];
 }
 
-function getTaskPreviewColumnStyle(column: TaskPreviewColumn) {
-  const color = /^#[0-9A-Fa-f]{6}$/.test(String(column.color)) ? column.color : '#E5E7EB';
-
-  return {
-    backgroundColor: hexToRgba(color, 0.22),
-    borderColor: hexToRgba(color, 0.75),
-  };
-}
-
-function hexToRgba(hex: string, alpha: number) {
-  const value = hex.slice(1);
-  const red = parseInt(value.slice(0, 2), 16);
-  const green = parseInt(value.slice(2, 4), 16);
-  const blue = parseInt(value.slice(4, 6), 16);
-
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}
-
 function hasTileTitle(toolType: string) {
   return toolType === 'chat' || toolType === 'todos' || toolType === 'tasks' || toolType === 'docs' || toolType === 'schedule' || toolType === 'board';
 }
@@ -519,7 +557,7 @@ function hasPreviewItems(tool: any) {
               <h1 class="text-3xl font-semibold text-gray-600">{{ project.name }}</h1>
             </div>
 
-            <div v-if="activeTools.length > 0" class="mb-8">
+            <div v-if="activeTools.length > 0" class="mb-8" :aria-busy="previewsLoading ? 'true' : 'false'">
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div
                   v-for="tool in activeTools"
@@ -590,14 +628,21 @@ function hasPreviewItems(tool: any) {
                       </div>
                       </template>
                       <template v-else-if="tool.tool_type === 'todos'">
-                        <div
-                          v-for="item in getTodoPreviewItems(tool.id)"
-                          :key="item.id"
-                          class="flex items-center gap-3 rounded-lg px-1 py-1.5"
-                        >
-                          <span class="h-4 w-4 flex-shrink-0 rounded border border-gray-300 bg-white"></span>
-                          <span class="truncate text-sm text-gray-700">{{ item.content }}</span>
-                        </div>
+                          <div
+                            v-for="group in getTodoPreviewGroups(tool.id)"
+                            :key="group.listId"
+                            class="space-y-1 rounded-md bg-gray-50 p-2"
+                          >
+                            <p class="truncate text-center text-xs font-semibold text-gray-500">{{ group.listName }}</p>
+                            <div
+                              v-for="item in group.items"
+                              :key="item.id"
+                              class="flex items-center gap-2 rounded-lg px-1 py-0.5"
+                            >
+                              <span class="h-4 w-4 flex-shrink-0 rounded border border-gray-300 bg-white"></span>
+                              <span class="truncate text-sm text-gray-700">{{ item.content }}</span>
+                            </div>
+                          </div>
                         <div v-if="getTodoPreviewItems(tool.id).length === 0" class="flex items-center justify-center">
                           <Icon :name="getToolIcon(tool.tool_type)" size="32px" class="text-blue-600" />
                         </div>
@@ -669,7 +714,6 @@ function hasPreviewItems(tool: any) {
                             v-for="column in getTaskPreviewColumns(tool.id)"
                             :key="column.id"
                             class="task-preview-column"
-                            :style="getTaskPreviewColumnStyle(column)"
                           >
                             <span class="task-preview-label">
                               {{ column.name }} ({{ column.taskCount }})
@@ -760,7 +804,8 @@ ion-content.project-paper-page {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
   border-radius: 0.375rem;
 }
 

@@ -26,11 +26,15 @@ async function loadData() {
       return;
     }
 
-    outpost.value = await getCurrentOutpost();
-    if (outpost.value) {
-      projects.value = await getUserProjects(currentOutpostId);
-      canCreateProject.value = await canUserPerform('create', currentOutpostId);
-    }
+    const [currentOutpost, currentProjects, canCreate] = await Promise.all([
+      getCurrentOutpost(),
+      getUserProjects(currentOutpostId),
+      canUserPerform('create', currentOutpostId),
+    ]);
+
+    outpost.value = currentOutpost;
+    projects.value = currentOutpost ? currentProjects : [];
+    canCreateProject.value = currentOutpost ? canCreate : false;
   } catch (error) {
     console.error('Error loading dashboard data:', error);
   } finally {

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { pb } from '~/utils/pb';
-import { getActiveTool } from '~/utils/tools';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { getProjectToolPageData } from '~/utils/tools';
 import ChatContainer from '~/components/chat/ChatContainer.vue';
 
 definePageMeta({
@@ -26,19 +24,15 @@ async function loadData() {
   error.value = '';
   
   try {
-    // Fetch project
-    project.value = await pb.collection('projects').getOne(projectId);
-    
-    // Check if chat tool is active
-    chatTool.value = await getActiveTool(projectId, 'chat');
+    const data = await getProjectToolPageData(projectId, 'chat');
+    project.value = data.project;
+    chatTool.value = data.tool;
+    canManage.value = data.canManage;
     
     if (!chatTool.value) {
       error.value = 'Chat is not available for this project';
       return;
     }
-
-    // Check if user can manage tools
-    canManage.value = await canUserPerformOnProject('manage_settings', projectId);
   } catch (err: any) {
     console.error('Error loading chat:', err);
     if (err.status === 404) {
@@ -49,7 +43,6 @@ async function loadData() {
       error.value = 'Failed to load chat';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

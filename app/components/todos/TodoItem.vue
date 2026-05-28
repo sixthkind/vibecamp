@@ -1,10 +1,10 @@
 <template>
   <div
-    class="flex items-start gap-3 px-3 py-1.5 group"
+    class="flex items-start gap-2.5 px-3 py-1 group"
     :class="{ 'opacity-60': item.completed }"
   >
     <!-- Checkbox -->
-    <div class="flex items-center pt-1">
+    <div class="flex items-center pt-0.5">
       <button
         @click="handleToggleCompleteClick"
         class="flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
@@ -36,12 +36,12 @@
         {{ item.content }}
       </NuxtLink>
 
-      <div v-if="item.description" class="text-sm text-gray-600 mt-0.5 line-clamp-2">
+      <div v-if="item.description" class="text-sm text-gray-600 line-clamp-2">
         {{ item.description }}
       </div>
 
       <!-- Meta Info -->
-      <div class="flex flex-wrap items-center gap-3 mt-1 text-xs">
+      <div class="flex flex-wrap items-center gap-2 mt-0.5 text-xs">
         <!-- Assignee -->
         <div v-if="assigneeInfo" class="flex items-center gap-1 text-gray-600">
           <Icon name="lucide:user" size="14px" />
@@ -64,14 +64,14 @@
     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <button
         @click="handleEdit"
-        class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+        class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
         title="Edit"
       >
         <Icon name="lucide:edit-2" size="16px" />
       </button>
       <button
         @click="handleDelete"
-        class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+        class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
         title="Delete"
       >
         <Icon name="lucide:trash-2" size="16px" />

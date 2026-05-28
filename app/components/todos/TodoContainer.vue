@@ -6,7 +6,7 @@
         <div v-if="isLoading"></div>
         
         <!-- Empty State -->
-        <div v-else-if="activeLists.length === 0" class="flex flex-col items-center justify-center py-16">
+        <div v-else-if="activeLists.length === 0 && archivedLists.length === 0" class="flex flex-col items-center justify-center py-16">
           <Icon name="lucide:check-square" size="64px" class="text-gray-300 mb-4" />
           <h3 class="text-xl font-semibold text-gray-900 mb-2">No lists yet</h3>
           <p class="text-gray-600 mb-6">Add your first list to get started.</p>
@@ -19,13 +19,49 @@
         </div>
         
         <!-- Lists -->
-        <div v-else class="space-y-3">
+        <div v-else class="space-y-2">
           <div
-            v-for="list in activeLists"
+            v-for="(list, listIndex) in activeLists"
             :key="list.id"
-            class="rounded-lg border border-gray-200 px-6 py-3"
+            class="rounded-lg border border-gray-200 px-5 py-2.5"
+            :style="getListStyle(list)"
           >
-            <h2 class="mb-2 text-center text-lg font-semibold text-gray-700">{{ list.name }}</h2>
+            <div class="relative mb-1.5 flex items-center justify-center">
+              <h2 class="min-w-0 truncate text-center text-lg font-semibold text-gray-700">{{ list.name }}</h2>
+              <div class="absolute right-0 flex shrink-0 items-center gap-1 text-gray-500">
+                <button
+                  type="button"
+                  class="rounded p-1 hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-30"
+                  title="Move list up"
+                  :disabled="listIndex === 0"
+                  @click="moveList(listIndex, -1)"
+                >
+                  <Icon name="lucide:arrow-up" size="15px" />
+                </button>
+                <button
+                  type="button"
+                  class="rounded p-1 hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-30"
+                  title="Move list down"
+                  :disabled="listIndex === activeLists.length - 1"
+                  @click="moveList(listIndex, 1)"
+                >
+                  <Icon name="lucide:arrow-down" size="15px" />
+                </button>
+                <ColorPicker
+                  :model-value="list.color"
+                  title="List color"
+                  @update:model-value="updateListColor(list, $event)"
+                />
+                <button
+                  type="button"
+                  class="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-red-600"
+                  title="Archive list"
+                  @click="handleToggleArchive(list.id, true)"
+                >
+                  <Icon name="lucide:archive" size="15px" />
+                </button>
+              </div>
+            </div>
 
             <div v-if="getSortedItemsForList(list.id).length > 0">
               <TodoItem
@@ -38,9 +74,9 @@
               />
             </div>
 
-            <p v-else class="py-3 text-center text-sm text-gray-500">No to-dos yet</p>
+            <p v-else class="py-2 text-center text-sm text-gray-500">No to-dos yet</p>
 
-            <div class="mt-2 flex justify-center text-sm">
+            <div class="mt-1.5 flex justify-center text-sm">
               <button
                 @click="openCreateItemModal(list.id)"
                 class="text-gray-600 hover:text-gray-900"
@@ -57,6 +93,38 @@
             >
               New list
             </button>
+          </div>
+
+          <div v-if="archivedLists.length > 0" class="mt-6 flex justify-center">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              @click="showArchivedLists = !showArchivedLists"
+            >
+              <Icon :name="showArchivedLists ? 'lucide:chevron-down' : 'lucide:archive'" size="16px" />
+              <span>Archived</span>
+            </button>
+          </div>
+
+          <div
+            v-if="showArchivedLists && archivedLists.length > 0"
+            class="mx-auto mt-3 max-w-xl rounded-lg border border-gray-200 bg-white/70 p-3"
+          >
+            <div
+              v-for="list in archivedLists"
+              :key="list.id"
+              class="flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-50"
+            >
+              <span class="min-w-0 truncate font-medium text-gray-700">{{ list.name }}</span>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                @click="unarchiveList(list)"
+              >
+                <Icon name="lucide:archive-restore" size="14px" />
+                <span>Unarchive</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -95,7 +163,9 @@ interface TodoListType {
   project_tool: string;
   name: string;
   description?: string;
+  color?: string;
   archived: boolean;
+  position?: number;
   created_by: string;
   created: string;
   updated: string;
@@ -137,6 +207,7 @@ const projectMembers = ref<ProjectMember[]>([]);
 // List modal
 const isListModalOpen = ref(false);
 const editingList = ref<TodoListType | undefined>(undefined);
+const showArchivedLists = ref(false);
 
 // Item modal
 const isItemModalOpen = ref(false);
@@ -146,7 +217,14 @@ const currentListIdForNewItem = ref<string>('');
 const currentUserId = computed(() => pb.authStore.record?.id);
 
 const activeLists = computed(() => {
-  return lists.value.filter(list => !list.archived);
+  return [...lists.value]
+    .filter(list => !list.archived)
+    .sort((a, b) => getPosition(a) - getPosition(b));
+});
+const archivedLists = computed(() => {
+  return [...lists.value]
+    .filter(list => list.archived)
+    .sort((a, b) => getPosition(a) - getPosition(b));
 });
 
 onMounted(async () => {
@@ -162,7 +240,7 @@ async function fetchLists() {
   try {
     const records = await pb.collection('todo_lists').getFullList<TodoListType>({
       filter: `project_tool = "${props.projectToolId}"`,
-      sort: '-created',
+      sort: 'created',
     });
     lists.value = records;
   } catch (error) {
@@ -255,7 +333,9 @@ async function handleListSubmit(data: { name: string; description?: string }) {
         archived: false,
         ...data,
       });
-      lists.value.unshift(newList);
+      const positionedList = { ...newList, position: getNextListPosition() };
+      lists.value.push(positionedList);
+      await saveListPositions(activeLists.value);
     }
     closeListModal();
   } catch (error) {
@@ -274,6 +354,41 @@ async function handleToggleArchive(listId: string, archived: boolean) {
   } catch (error) {
     console.error('Error toggling archive:', error);
     alert('Failed to update list. Please try again.');
+  }
+}
+
+async function unarchiveList(list: TodoListType) {
+  const nextPosition = getNextListPosition();
+
+  try {
+    const updated = await pb.collection('todo_lists').update<TodoListType>(list.id, {
+      archived: false,
+      position: nextPosition,
+    });
+    const index = lists.value.findIndex(l => l.id === list.id);
+    if (index !== -1) {
+      lists.value[index] = { ...lists.value[index], ...updated, archived: false, position: nextPosition };
+    }
+
+    if (archivedLists.value.length === 0) {
+      showArchivedLists.value = false;
+    }
+  } catch (error) {
+    console.error('Error unarchiving todo list:', error);
+  }
+}
+
+async function updateListColor(list: TodoListType, color: string | undefined) {
+  list.color = color;
+
+  try {
+    const updated = await pb.collection('todo_lists').update<TodoListType>(list.id, { color: color ?? '' });
+    const index = lists.value.findIndex(l => l.id === list.id);
+    if (index !== -1) {
+      lists.value[index] = { ...lists.value[index], ...updated };
+    }
+  } catch (error) {
+    console.error('Error updating list color:', error);
   }
 }
 
@@ -304,6 +419,67 @@ async function confirmDeleteList(listId: string) {
   });
   
   await alert.present();
+}
+
+async function moveList(index: number, direction: -1 | 1) {
+  const orderedLists = activeLists.value;
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= orderedLists.length) return;
+
+  const reordered = [...orderedLists];
+  const [moved] = reordered.splice(index, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  lists.value = lists.value.map((list) => {
+    const orderedIndex = reordered.findIndex((item) => item.id === list.id);
+    return orderedIndex === -1 ? list : { ...list, position: orderedIndex + 1 };
+  });
+
+  await saveListPositions(reordered);
+}
+
+async function saveListPositions(orderedLists: TodoListType[]) {
+  try {
+    await Promise.all(
+      orderedLists.map((list, nextIndex) => (
+        pb.collection('todo_lists').update(list.id, { position: nextIndex + 1 })
+      ))
+    );
+  } catch (error) {
+    console.error('Error saving todo list order:', error);
+  }
+}
+
+function getNextListPosition() {
+  return activeLists.value.length > 0
+    ? Math.max(...activeLists.value.map((list) => getPosition(list))) + 1
+    : 1;
+}
+
+function getPosition(item: { position?: number }) {
+  return item.position || 0;
+}
+
+function getListStyle(list: TodoListType) {
+  const color = isValidHexColor(list.color) ? list.color : '#E5E7EB';
+
+  return {
+    backgroundColor: hexToRgba(color, 0.14),
+    borderColor: hexToRgba(color, 0.55),
+  };
+}
+
+function isValidHexColor(color?: string) {
+  return /^#[0-9A-Fa-f]{6}$/.test(String(color || ''));
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const value = hex.slice(1);
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
 // Item Modal Functions

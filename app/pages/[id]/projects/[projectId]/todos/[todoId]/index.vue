@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { alertController } from '@ionic/vue';
 import { pb } from '~/utils/pb';
+import { getProjectWithToolPageData } from '~/utils/tools';
 
 definePageMeta({
   middleware: "auth",
@@ -35,10 +36,15 @@ async function loadData() {
   error.value = '';
 
   try {
-    project.value = await pb.collection('projects').getOne(projectId);
-    todo.value = await pb.collection('todo_items').getOne(todoId, {
-      expand: 'assignee,created_by,todo_list',
-    });
+    const [projectRecord, todoRecord] = await Promise.all([
+      getProjectWithToolPageData(projectId),
+      pb.collection('todo_items').getOne(todoId, {
+        expand: 'assignee,created_by,todo_list',
+      }),
+    ]);
+
+    project.value = projectRecord;
+    todo.value = todoRecord;
   } catch (err: any) {
     console.error('Error loading to-do:', err);
     if (err.status === 404) {
@@ -49,7 +55,6 @@ async function loadData() {
       error.value = 'Failed to load to-do';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

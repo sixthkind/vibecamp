@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { pb } from '~/utils/pb';
-import { getActiveTool } from '~/utils/tools';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { getProjectToolPageData } from '~/utils/tools';
 import TodoContainer from '~/components/todos/TodoContainer.vue';
 
 definePageMeta({
@@ -26,19 +24,15 @@ async function loadData() {
   error.value = '';
   
   try {
-    // Fetch project
-    project.value = await pb.collection('projects').getOne(projectId);
-    
-    // Check if todos tool is active
-    todosTool.value = await getActiveTool(projectId, 'todos');
+    const data = await getProjectToolPageData(projectId, 'todos');
+    project.value = data.project;
+    todosTool.value = data.tool;
+    canManage.value = data.canManage;
     
     if (!todosTool.value) {
       error.value = 'To-dos are not available for this project';
       return;
     }
-
-    // Check if user can manage tools
-    canManage.value = await canUserPerformOnProject('manage_settings', projectId);
   } catch (err: any) {
     console.error('Error loading todos:', err);
     if (err.status === 404) {
@@ -49,7 +43,6 @@ async function loadData() {
       error.value = 'Failed to load to-dos';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

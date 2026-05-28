@@ -18,7 +18,7 @@
 
       <div v-if="isLoading"></div>
 
-      <div v-else-if="activeColumns.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+      <div v-else-if="activeColumns.length === 0 && archivedColumns.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
         <Icon name="lucide:columns-3" size="64px" class="mb-4 text-gray-300" />
         <h3 class="mb-2 text-xl font-semibold text-gray-900">No columns yet</h3>
         <p class="mb-6 text-gray-600">Add your first column to start the board.</p>
@@ -41,7 +41,7 @@
             @dragover.prevent
             @drop="handleColumnDrop(column)"
           >
-            <div class="mb-3 flex items-start gap-2">
+            <div class="mb-3 flex items-center gap-2">
               <input
                 v-model="column.name"
                 type="text"
@@ -49,18 +49,7 @@
                 @blur="saveColumn(column)"
                 @keydown.enter.prevent="blurInput"
               />
-              <input
-                :value="column.color"
-                type="color"
-                class="h-8 w-8 shrink-0 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                title="Column color"
-                @change="updateColumnColor(column, $event)"
-              />
-            </div>
-
-            <div class="mb-3 flex items-center justify-between text-xs text-gray-500">
-              <span>{{ getTasksForColumn(column.id).length }} tasks</span>
-              <div class="flex items-center gap-1">
+              <div class="flex shrink-0 items-center gap-1 text-gray-500">
                 <button
                   type="button"
                   class="rounded p-1 hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-30"
@@ -79,6 +68,11 @@
                 >
                   <Icon name="lucide:arrow-right" size="15px" />
                 </button>
+                <ColorPicker
+                  :model-value="column.color"
+                  title="Column color"
+                  @update:model-value="updateColumnColor(column, $event)"
+                />
                 <button
                   type="button"
                   class="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-red-600"
@@ -110,23 +104,72 @@
               </button>
             </div>
 
-            <form class="mt-3 flex gap-2" @submit.prevent="createTask(column)">
+            <form
+              v-if="newTaskColumnId === column.id"
+              class="mt-3 flex items-center gap-2"
+              @submit.prevent="createTask(column)"
+            >
               <input
                 v-model="newTaskTitles[column.id]"
                 type="text"
+                :ref="(el) => setNewTaskInputRef(column.id, el)"
                 class="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none"
                 placeholder="New task"
+                @keydown.esc.prevent="cancelNewTask(column.id)"
               />
               <button
                 type="submit"
-                class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="!newTaskTitles[column.id]?.trim()"
                 title="Add task"
               >
-                <Icon name="lucide:plus" size="18px" />
+                <Icon name="lucide:check" size="18px" />
               </button>
             </form>
+
+            <div v-else class="mt-3 flex justify-end">
+              <button
+                type="button"
+                class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-700 shadow-sm hover:bg-gray-100"
+                title="New task"
+                @click="startNewTask(column.id)"
+              >
+                <Icon name="lucide:plus" size="18px" />
+              </button>
+            </div>
           </section>
+        </div>
+
+        <div v-if="archivedColumns.length > 0" class="mt-6 flex min-w-full justify-center">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            @click="showArchivedColumns = !showArchivedColumns"
+          >
+            <Icon :name="showArchivedColumns ? 'lucide:chevron-down' : 'lucide:archive'" size="16px" />
+            <span>Archived</span>
+          </button>
+        </div>
+
+        <div
+          v-if="showArchivedColumns && archivedColumns.length > 0"
+          class="mx-auto mt-3 max-w-3xl rounded-lg border border-gray-200 bg-white/70 p-3"
+        >
+          <div
+            v-for="column in archivedColumns"
+            :key="column.id"
+            class="flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            <span class="min-w-0 truncate font-medium text-gray-700">{{ column.name }}</span>
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+              @click="unarchiveColumn(column)"
+            >
+              <Icon name="lucide:archive-restore" size="14px" />
+              <span>Unarchive</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -199,7 +242,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { alertController } from '@ionic/vue';
 import { pb } from '~/utils/pb';
 
@@ -238,15 +281,23 @@ const isSavingTask = ref(false);
 const columns = ref<TaskColumn[]>([]);
 const tasks = ref<TaskRecord[]>([]);
 const newTaskTitles = ref<Record<string, string>>({});
+const newTaskColumnId = ref<string | null>(null);
+const showArchivedColumns = ref(false);
 const selectedTask = ref<TaskRecord | null>(null);
 const taskTitle = ref('');
 const taskDescription = ref('');
 const draggedTask = ref<TaskRecord | null>(null);
+const newTaskInputRefs = new Map<string, HTMLInputElement>();
 
 const currentUserId = computed(() => pb.authStore.record?.id);
 const activeColumns = computed(() => {
   return [...columns.value]
     .filter((column) => !column.archived)
+    .sort((a, b) => getPosition(a) - getPosition(b));
+});
+const archivedColumns = computed(() => {
+  return [...columns.value]
+    .filter((column) => column.archived)
     .sort((a, b) => getPosition(a) - getPosition(b));
 });
 
@@ -351,9 +402,8 @@ async function saveColumn(column: TaskColumn) {
   }
 }
 
-async function updateColumnColor(column: TaskColumn, event: Event) {
-  const input = event.target as HTMLInputElement;
-  column.color = input.value;
+async function updateColumnColor(column: TaskColumn, color: string | undefined) {
+  column.color = color ?? '#E5E7EB';
   await saveColumn(column);
 }
 
@@ -410,6 +460,46 @@ async function archiveColumn(column: TaskColumn) {
   await alert.present();
 }
 
+async function unarchiveColumn(column: TaskColumn) {
+  try {
+    const maxPosition = activeColumns.value.length > 0
+      ? Math.max(...activeColumns.value.map((activeColumn) => getPosition(activeColumn)))
+      : 0;
+    const updated = await pb.collection('task_columns').update<TaskColumn>(column.id, {
+      archived: false,
+      position: maxPosition + 1,
+    });
+    replaceColumn(updated);
+
+    if (archivedColumns.value.length === 0) {
+      showArchivedColumns.value = false;
+    }
+  } catch (error) {
+    console.error('Error unarchiving task column:', error);
+  }
+}
+
+function setNewTaskInputRef(columnId: string, element: Element | null) {
+  if (element instanceof HTMLInputElement) {
+    newTaskInputRefs.set(columnId, element);
+  } else {
+    newTaskInputRefs.delete(columnId);
+  }
+}
+
+async function startNewTask(columnId: string) {
+  newTaskColumnId.value = columnId;
+  await nextTick();
+  newTaskInputRefs.get(columnId)?.focus();
+}
+
+function cancelNewTask(columnId: string) {
+  newTaskTitles.value[columnId] = '';
+  if (newTaskColumnId.value === columnId) {
+    newTaskColumnId.value = null;
+  }
+}
+
 async function createTask(column: TaskColumn) {
   const title = newTaskTitles.value[column.id]?.trim();
   if (!title || !currentUserId.value) return;
@@ -431,6 +521,7 @@ async function createTask(column: TaskColumn) {
     });
     tasks.value.push(task);
     newTaskTitles.value[column.id] = '';
+    newTaskColumnId.value = null;
   } catch (error) {
     console.error('Error creating task:', error);
   }

@@ -1,5 +1,5 @@
 import { pb } from './pb';
-import { canUserPerformOnProject } from './permissions';
+import { canRolePerformOnProject, canUserPerformOnProject, getRoleFromOutpost } from './permissions';
 
 export interface ProjectTool {
   id: string;
@@ -10,6 +10,41 @@ export interface ProjectTool {
   settings: Record<string, any>;
   created: string;
   updated: string;
+}
+
+const projectToolPageRequests = new Map<string, Promise<any>>();
+const projectToolPageCache = new Map<string, any>();
+
+export async function getProjectWithToolPageData(projectId: string) {
+  const cached = projectToolPageCache.get(projectId);
+  if (cached) return cached;
+
+  const pending = projectToolPageRequests.get(projectId);
+  if (pending) return pending;
+
+  const request = pb.collection('projects').getOne(projectId, {
+    expand: 'outpost,project_tools_via_project',
+  })
+    .then((project) => {
+      projectToolPageCache.set(projectId, project);
+      return project;
+    })
+    .finally(() => {
+      projectToolPageRequests.delete(projectId);
+    });
+
+  projectToolPageRequests.set(projectId, request);
+  return request;
+}
+
+export function clearProjectWithToolPageDataCache(projectId?: string) {
+  if (projectId) {
+    projectToolPageCache.delete(projectId);
+    projectToolPageRequests.delete(projectId);
+  } else {
+    projectToolPageCache.clear();
+    projectToolPageRequests.clear();
+  }
 }
 
 /**
@@ -72,6 +107,25 @@ export async function getActiveTool(projectId: string, toolType: string): Promis
     console.error('Error fetching active tool:', error);
     return null;
   }
+}
+
+/**
+ * Load the common project/tool shell for a tool page in a single request.
+ */
+export async function getProjectToolPageData(projectId: string, toolType: string) {
+  const project = await getProjectWithToolPageData(projectId);
+
+  const expandedTools = project.expand?.project_tools_via_project;
+  const tools = Array.isArray(expandedTools) ? expandedTools : [];
+  const outpost = project.expand?.outpost;
+  const role = getRoleFromOutpost(outpost);
+
+  return {
+    project,
+    outpost,
+    tool: tools.find((tool: ProjectTool) => tool.tool_type === toolType && tool.active) || null,
+    canManage: canRolePerformOnProject('manage_settings', role),
+  };
 }
 
 /**

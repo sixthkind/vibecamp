@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { pb } from '~/utils/pb';
-import { getActiveTool } from '~/utils/tools';
+import { getProjectToolPageData } from '~/utils/tools';
 import TasksContainer from '~/components/tasks/TasksContainer.vue';
 
 definePageMeta({
@@ -24,8 +23,9 @@ async function loadData() {
   error.value = '';
 
   try {
-    project.value = await pb.collection('projects').getOne(projectId);
-    tasksTool.value = await getActiveTool(projectId, 'tasks');
+    const data = await getProjectToolPageData(projectId, 'tasks');
+    project.value = data.project;
+    tasksTool.value = data.tool;
 
     if (!tasksTool.value) {
       error.value = 'Tasks are not available for this project';
@@ -41,7 +41,6 @@ async function loadData() {
       error.value = 'Failed to load tasks';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

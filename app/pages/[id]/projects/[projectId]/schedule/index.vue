@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { pb } from '~/utils/pb';
-import { getActiveTool } from '~/utils/tools';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { getProjectToolPageData } from '~/utils/tools';
 import CalendarContainer from '~/components/calendar/CalendarContainer.vue';
 
 definePageMeta({
@@ -26,19 +24,15 @@ async function loadData() {
   error.value = '';
   
   try {
-    // Fetch project
-    project.value = await pb.collection('projects').getOne(projectId);
-    
-    // Check if schedule tool is active
-    scheduleTool.value = await getActiveTool(projectId, 'schedule');
+    const data = await getProjectToolPageData(projectId, 'schedule');
+    project.value = data.project;
+    scheduleTool.value = data.tool;
+    canManage.value = data.canManage;
     
     if (!scheduleTool.value) {
       error.value = 'Schedule is not available for this project';
       return;
     }
-
-    // Check if user can manage tools
-    canManage.value = await canUserPerformOnProject('manage_settings', projectId);
   } catch (err: any) {
     console.error('Error loading schedule:', err);
     if (err.status === 404) {
@@ -49,7 +43,6 @@ async function loadData() {
       error.value = 'Failed to load schedule';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

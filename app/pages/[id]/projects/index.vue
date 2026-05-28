@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { pb } from '~/utils/pb';
-import { getUserProjects, canUserPerform } from '~/utils/permissions';
+import { getOutpost, getUserProjects, canUserPerform } from '~/utils/permissions';
 
 definePageMeta({
   middleware: "auth"
 });
 
 const route = useRoute();
+const outpostId = computed(() => String(route.params.id));
 
 const projects = ref<any[]>([]);
 const outpost = ref<any>(null);
@@ -27,10 +27,15 @@ async function loadData() {
   loading.value = true;
   
   try {
-    const outpostId = String(route.params.id);
-    outpost.value = await pb.collection('outposts').getOne(outpostId);
-    projects.value = await getUserProjects(outpostId);
-    canCreateProject.value = await canUserPerform('create', outpostId);
+    const [currentOutpost, currentProjects, canCreate] = await Promise.all([
+      getOutpost(outpostId.value),
+      getUserProjects(outpostId.value),
+      canUserPerform('create', outpostId.value),
+    ]);
+
+    outpost.value = currentOutpost;
+    projects.value = currentProjects;
+    canCreateProject.value = canCreate;
   } catch (error) {
     console.error('Error loading projects:', error);
   } finally {

@@ -2,7 +2,8 @@
 import { ref, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb } from '~/utils/pb';
-import { canUserPerformOnProject } from '~/utils/permissions';
+import { canRolePerformOnProject, getRoleFromOutpost } from '~/utils/permissions';
+import { getProjectWithToolPageData } from '~/utils/tools';
 import { alertController } from '@ionic/vue';
 
 definePageMeta({
@@ -31,17 +32,21 @@ async function loadData() {
   error.value = '';
 
   try {
-    // Check permissions
-    const canEdit = await canUserPerformOnProject('manage_settings', projectId);
+    const [projectRecord, itemRecord] = await Promise.all([
+      getProjectWithToolPageData(projectId),
+      pb.collection('docs_items').getOne(itemId),
+    ]);
+
+    project.value = projectRecord;
+    item.value = itemRecord;
+
+    const projectRole = getRoleFromOutpost(projectRecord.expand?.outpost);
+    const canEdit = canRolePerformOnProject('manage_settings', projectRole);
     if (!canEdit) {
       error.value = 'You do not have permission to edit this item';
       return;
     }
 
-    project.value = await pb.collection('projects').getOne(projectId);
-
-    // Fetch item
-    item.value = await pb.collection('docs_items').getOne(itemId);
     title.value = item.value.title;
     description.value = item.value.description || '';
     content.value = item.value.content || '';
@@ -65,7 +70,6 @@ async function loadData() {
       error.value = 'Failed to load item';
     }
   } finally {
-    await temporaryLoadingDelay();
     loading.value = false;
   }
 }

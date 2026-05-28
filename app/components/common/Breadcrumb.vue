@@ -25,6 +25,7 @@
 import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
+import { getProjectWithToolPageData } from '~/utils/tools';
 
 interface Breadcrumb {
   label: string;
@@ -66,6 +67,8 @@ const toolLabels: Record<string, string> = {
   tools: 'Tools',
 };
 
+const projectToolRoutes = new Set(['chat', 'docs', 'tasks', 'schedule', 'board', 'todos', 'tools']);
+
 async function buildBreadcrumbs() {
   if (!shouldShowBreadcrumbs.value) {
     breadcrumbs.value = [];
@@ -90,20 +93,22 @@ async function buildBreadcrumbs() {
     const postId = params.postId as string;
     const todoId = params.todoId as string;
 
+    const toolIndex = projectId ? pathSegments.indexOf(projectId) + 1 : -1;
+    const toolType = toolIndex >= 0 && toolIndex < pathSegments.length ? pathSegments[toolIndex] : '';
+
     // If we have a project, fetch it
     if (projectId) {
       try {
-        const project = await pb.collection('projects').getOne(projectId);
+        const project = projectToolRoutes.has(toolType)
+          ? await getProjectWithToolPageData(projectId)
+          : await pb.collection('projects').getOne(projectId);
         crumbs.push({
           label: project.name,
           path: `/${outpostId}/projects/${projectId}`,
         });
 
         // Check what tool/section we're in
-        const toolIndex = pathSegments.indexOf(projectId) + 1;
         if (toolIndex < pathSegments.length) {
-          const toolType = pathSegments[toolIndex];
-          
           // Add tool breadcrumb if it's a known tool
           if (toolLabels[toolType]) {
             // For docs and schedule, check if we're on the index or detail page

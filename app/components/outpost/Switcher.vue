@@ -1,23 +1,47 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { pb } from '~/utils/pb';
-import { getUserOutposts, getCurrentOutpostId, setCurrentOutpost } from '~/utils/permissions';
+import { getUserOutposts, getCurrentOutpost, getCurrentOutpostId, setCurrentOutpost } from '~/utils/permissions';
 
 const outposts = ref<any[]>([]);
 const currentOutpost = ref<any>(null);
 const showDropdown = ref(false);
 const loading = ref(true);
+const outpostsLoading = ref(false);
+const outpostsLoaded = ref(false);
 
-async function loadOutposts() {
+async function loadCurrentOutpost() {
   loading.value = true;
   try {
-    outposts.value = await getUserOutposts();
     const currentId = getCurrentOutpostId();
-    
+
     if (currentId) {
-      currentOutpost.value = outposts.value.find(o => o.id === currentId);
+      currentOutpost.value = await getCurrentOutpost();
     }
-    
+
+    if (!currentOutpost.value) {
+      await loadOutposts();
+    }
+  } catch (error) {
+    console.error('Error loading current outpost:', error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadOutposts(force = false) {
+  if (outpostsLoaded.value && !force) return;
+
+  outpostsLoading.value = true;
+  try {
+    outposts.value = await getUserOutposts();
+    outpostsLoaded.value = true;
+    const currentId = getCurrentOutpostId();
+
+    if (currentId) {
+      currentOutpost.value = outposts.value.find(o => o.id === currentId) || currentOutpost.value;
+    }
+
     // If no current outpost but we have outposts, set the first one
     if (!currentOutpost.value && outposts.value.length > 0) {
       currentOutpost.value = outposts.value[0];
@@ -26,7 +50,7 @@ async function loadOutposts() {
   } catch (error) {
     console.error('Error loading outposts:', error);
   } finally {
-    loading.value = false;
+    outpostsLoading.value = false;
   }
 }
 
@@ -41,10 +65,13 @@ function selectOutpost(outpost: any) {
 
 function toggleDropdown() {
   showDropdown.value = !showDropdown.value;
+  if (showDropdown.value) {
+    loadOutposts();
+  }
 }
 
 function handleOutpostChange(event: CustomEvent) {
-  loadOutposts();
+  loadCurrentOutpost();
 }
 
 function handleClickOutside(event: MouseEvent) {
@@ -55,7 +82,7 @@ function handleClickOutside(event: MouseEvent) {
 }
 
 onMounted(() => {
-  loadOutposts();
+  loadCurrentOutpost();
   window.addEventListener('outpost-changed', handleOutpostChange as EventListener);
   document.addEventListener('click', handleClickOutside);
 });
@@ -114,7 +141,7 @@ onUnmounted(() => {
         </div>
 
         <div v-if="outposts.length === 0" class="px-4 py-8 text-center text-gray-500 text-sm">
-          No outposts yet
+          {{ outpostsLoading ? 'Loading outposts...' : 'No outposts yet' }}
         </div>
 
         <button
@@ -169,4 +196,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-

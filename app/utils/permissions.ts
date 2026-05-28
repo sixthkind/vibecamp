@@ -47,6 +47,74 @@ const PROJECT_PERMISSION_MATRIX: Record<ProjectAction, Role> = {
   delete_project: 'owner',
 };
 
+const outpostCache = new Map<string, any>();
+const outpostRequests = new Map<string, Promise<any>>();
+
+let userOutpostsCache: any[] | null = null;
+let userOutpostsCacheUserId: string | null = null;
+let userOutpostsRequest: Promise<any[]> | null = null;
+
+function cacheOutpost(outpost: any) {
+  if (outpost?.id) {
+    outpostCache.set(outpost.id, outpost);
+  }
+}
+
+export function getRoleFromOutpost(outpost: any): Role | null {
+  const userId = pb.authStore.record?.id;
+  if (!userId || !outpost) return null;
+
+  if (outpost.owner === userId) {
+    return 'owner';
+  }
+
+  if (Array.isArray(outpost.members) && outpost.members.includes(userId)) {
+    return 'member';
+  }
+
+  return null;
+}
+
+export function canRolePerformOnProject(action: ProjectAction, role: Role | null): boolean {
+  if (!role) return false;
+
+  const requiredRole = PROJECT_PERMISSION_MATRIX[action];
+  return role === 'owner' || requiredRole === 'member';
+}
+
+export function clearOutpostCache(outpostId?: string) {
+  if (outpostId) {
+    outpostCache.delete(outpostId);
+    outpostRequests.delete(outpostId);
+  } else {
+    outpostCache.clear();
+    outpostRequests.clear();
+    userOutpostsCache = null;
+    userOutpostsRequest = null;
+    userOutpostsCacheUserId = null;
+  }
+}
+
+export async function getOutpost(outpostId: string) {
+  const cached = outpostCache.get(outpostId);
+  if (cached) return cached;
+
+  const pending = outpostRequests.get(outpostId);
+  if (pending) return pending;
+
+  const request = pb.collection('outposts').getOne(outpostId)
+    .then((outpost) => {
+      cacheOutpost(outpost);
+      return outpost;
+    })
+    .finally(() => {
+      outpostRequests.delete(outpostId);
+    });
+
+  outpostRequests.set(outpostId, request);
+  return request;
+}
+
 /**
  * Get all outposts the current user belongs to
  */
@@ -54,19 +122,40 @@ export async function getUserOutposts() {
   const userId = pb.authStore.record?.id;
   if (!userId) return [];
 
+  if (userOutpostsCache && userOutpostsCacheUserId === userId) {
+    return userOutpostsCache;
+  }
+
+  if (userOutpostsRequest && userOutpostsCacheUserId === userId) {
+    return userOutpostsRequest;
+  }
+
   try {
     // Get outposts where user is owner or member
-    const outposts = await pb.collection('outposts').getFullList({
-      filter: `owner = "${userId}" || members.id ?= "${userId}"`,
-      sort: '-created',
-    });
+    userOutpostsCacheUserId = userId;
+    userOutpostsRequest = pb.collection('outposts').getFullList({
+        filter: `owner = "${userId}" || members.id ?= "${userId}"`,
+        sort: '-created',
+      })
+      .then((outposts) => {
+        const mapped = outposts.map(outpost => ({
+          ...outpost,
+          userRole: (outpost.owner === userId ? 'owner' : 'member') as Role,
+        }));
 
-    return outposts.map(outpost => ({
-      ...outpost,
-      userRole: outpost.owner === userId ? 'owner' : 'member' as Role,
-    }));
+        mapped.forEach(cacheOutpost);
+        userOutpostsCache = mapped;
+        return mapped;
+      })
+      .finally(() => {
+        userOutpostsRequest = null;
+      });
+
+    return await userOutpostsRequest;
   } catch (error) {
     console.error('Error fetching user outposts:', error);
+    userOutpostsCache = null;
+    userOutpostsCacheUserId = null;
     return [];
   }
 }
@@ -87,10 +176,8 @@ export async function getCurrentOutpost() {
   if (!outpostId) return null;
 
   try {
-    const outpost = await pb.collection('outposts').getOne(outpostId, {
-      expand: 'members',
-    });
-    const role = await getUserRole(outpostId);
+    const outpost = await getOutpost(outpostId);
+    const role = getRoleFromOutpost(outpost);
     return {
       ...outpost,
       userRole: role,
@@ -120,6 +207,7 @@ export function setCurrentOutpost(outpostId: string) {
 export function clearCurrentOutpost() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('currentOutpostId');
+  clearOutpostCache();
 }
 
 /**
@@ -130,19 +218,8 @@ export async function getUserRole(outpostId: string): Promise<Role | null> {
   if (!userId) return null;
 
   try {
-    const outpost = await pb.collection('outposts').getOne(outpostId);
-    
-    // Check if user is the owner
-    if (outpost.owner === userId) {
-      return 'owner';
-    }
-
-    // Check if user is in members array
-    if (outpost.members && outpost.members.includes(userId)) {
-      return 'member';
-    }
-
-    return null;
+    const outpost = await getOutpost(outpostId);
+    return getRoleFromOutpost(outpost);
   } catch (error) {
     console.error('Error fetching user role:', error);
     return null;
@@ -284,9 +361,12 @@ export async function addMember(
     // Add user to members array
     const updatedMembers = [...currentMembers, userId];
     
-    return await pb.collection('outposts').update(outpostId, {
+    const updatedOutpost = await pb.collection('outposts').update(outpostId, {
       members: updatedMembers,
     });
+    cacheOutpost(updatedOutpost);
+    userOutpostsCache = null;
+    return updatedOutpost;
   } catch (error: any) {
     console.error('Error adding member:', error);
     throw error;
@@ -316,9 +396,11 @@ export async function removeMember(userId: string, outpostId: string) {
     const currentMembers = outpost.members || [];
     const updatedMembers = currentMembers.filter((id: string) => id !== userId);
     
-    await pb.collection('outposts').update(outpostId, {
+    const updatedOutpost = await pb.collection('outposts').update(outpostId, {
       members: updatedMembers,
     });
+    cacheOutpost(updatedOutpost);
+    userOutpostsCache = null;
   } catch (error) {
     console.error('Error removing member:', error);
     throw error;
@@ -335,7 +417,7 @@ export async function initializeOutpostContext() {
   // If we have a current outpost, verify it's still valid
   if (currentOutpostId) {
     try {
-      await pb.collection('outposts').getOne(currentOutpostId);
+      await getOutpost(currentOutpostId);
       return currentOutpostId;
     } catch {
       // Current outpost is invalid, clear it
@@ -365,14 +447,13 @@ export async function getUserProjects(outpostId: string) {
   if (!userId) return [];
 
   try {
-    // Get all projects in the outpost that the user has access to
-    const projects = await pb.collection('projects').getFullList({
-      filter: `outpost = "${outpostId}"`,
-      sort: '-created',
-    });
-
-    // For each project, get the user's role (based on outpost role)
-    const role = await getUserRole(outpostId);
+    const [projects, role] = await Promise.all([
+      pb.collection('projects').getFullList({
+        filter: `outpost = "${outpostId}"`,
+        sort: '-created',
+      }),
+      getUserRole(outpostId),
+    ]);
     
     return projects.map(project => ({
       ...project,
@@ -420,11 +501,7 @@ export async function canUserPerformOnProject(
   if (!userId) return false;
 
   const userRole = await getProjectRole(projectId);
-  if (!userRole) return false;
-
-  const requiredRole = PROJECT_PERMISSION_MATRIX[action];
-  // Owner can do everything, members can do member-level actions
-  return userRole === 'owner' || requiredRole === 'member';
+  return canRolePerformOnProject(action, userRole);
 }
 
 /**
