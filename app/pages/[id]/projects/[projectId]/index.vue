@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
+import { onIonViewWillEnter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import { pb } from '~/utils/pb';
 import { canUserPerformOnProject } from '~/utils/permissions';
@@ -25,6 +26,7 @@ const docsPreviews = ref<Record<string, DocsPreviewItem[]>>({});
 const calendarPreviews = ref<Record<string, CalendarPreviewDay[]>>({});
 const boardPreviews = ref<Record<string, BoardPreviewPost[]>>({});
 const taskPreviews = ref<Record<string, TaskPreviewColumn[]>>({});
+const previewReady = ref<Record<string, boolean>>({});
 
 interface ChatMessage {
   id: string;
@@ -75,10 +77,17 @@ interface TaskPreviewColumn {
 }
 
 const currentUserId = computed(() => pb.authStore.record?.id);
+let loadSequence = 0;
+let hasLoadedOnce = false;
 
-async function loadData() {
-  loading.value = true;
-  error.value = '';
+async function loadData(options: { showLoading?: boolean } = {}) {
+  const sequence = ++loadSequence;
+  const showLoading = options.showLoading ?? !hasLoadedOnce;
+
+  if (showLoading) {
+    loading.value = true;
+    error.value = '';
+  }
   
   try {
     const projectId = String(route.params.projectId);
@@ -92,31 +101,72 @@ async function loadData() {
     
     // Load active tools
     activeTools.value = await getActiveProjectTools(projectId);
-    loadChatPreviews();
-    loadTodoPreviews();
-    loadDocsPreviews();
-    loadCalendarPreviews();
-    loadBoardPreviews();
-    loadTaskPreviews();
+    syncPreviewReady(!hasLoadedOnce);
+    await Promise.all([
+      loadChatPreviews(sequence),
+      loadTodoPreviews(sequence),
+      loadDocsPreviews(sequence),
+      loadCalendarPreviews(sequence),
+      loadBoardPreviews(sequence),
+      loadTaskPreviews(sequence),
+    ]);
+
+    if (sequence !== loadSequence) return;
+    hasLoadedOnce = true;
+    error.value = '';
   } catch (err: any) {
+    if (sequence !== loadSequence) return;
     console.error('Error loading project:', err);
-    error.value = 'Failed to load project';
+    if (showLoading || !hasLoadedOnce) {
+      error.value = 'Failed to load project';
+    }
   } finally {
-    await temporaryLoadingDelay();
-    loading.value = false;
+    if (sequence !== loadSequence) return;
+    if (showLoading) {
+      await temporaryLoadingDelay();
+      if (sequence !== loadSequence) return;
+      loading.value = false;
+    }
   }
 }
 
 onMounted(() => {
-  loadData();
+  loadData({ showLoading: true });
 });
 
-async function loadChatPreviews() {
-  try {
-    const chatTools = activeTools.value.filter(tool => tool.tool_type === 'chat');
+onIonViewWillEnter(() => {
+  loadData({ showLoading: !hasLoadedOnce });
+});
 
+function syncPreviewReady(reset: boolean) {
+  const next: Record<string, boolean> = {};
+
+  for (const tool of activeTools.value) {
+    next[tool.id] = reset ? false : (previewReady.value[tool.id] ?? false);
+  }
+
+  previewReady.value = next;
+}
+
+function markPreviewReady(toolIds: string[], sequence: number) {
+  if (sequence !== loadSequence) return;
+
+  previewReady.value = {
+    ...previewReady.value,
+    ...Object.fromEntries(toolIds.map((toolId) => [toolId, true])),
+  };
+}
+
+function isToolPreviewReady(tool: any) {
+  return !hasTileTitle(tool.tool_type) || previewReady.value[tool.id] === true;
+}
+
+async function loadChatPreviews(sequence = loadSequence) {
+  const chatTools = activeTools.value.filter(tool => tool.tool_type === 'chat');
+
+  try {
     if (chatTools.length === 0) {
-      chatPreviews.value = {};
+      if (sequence === loadSequence) chatPreviews.value = {};
       return;
     }
 
@@ -132,9 +182,13 @@ async function loadChatPreviews() {
       })
     );
 
-    chatPreviews.value = Object.fromEntries(previews);
+    if (sequence === loadSequence) {
+      chatPreviews.value = Object.fromEntries(previews);
+      markPreviewReady(chatTools.map((tool) => tool.id), sequence);
+    }
   } catch (err) {
     console.error('Error loading chat previews:', err);
+    markPreviewReady(chatTools.map((tool) => tool.id), sequence);
   }
 }
 
@@ -146,12 +200,12 @@ function getChatPreviewName(message: ChatMessage) {
   return message.expand?.user?.name || message.expand?.user?.email?.split('@')[0] || 'Someone';
 }
 
-async function loadTodoPreviews() {
-  try {
-    const todoTools = activeTools.value.filter(tool => tool.tool_type === 'todos');
+async function loadTodoPreviews(sequence = loadSequence) {
+  const todoTools = activeTools.value.filter(tool => tool.tool_type === 'todos');
 
+  try {
     if (todoTools.length === 0) {
-      todoPreviews.value = {};
+      if (sequence === loadSequence) todoPreviews.value = {};
       return;
     }
 
@@ -166,9 +220,13 @@ async function loadTodoPreviews() {
       })
     );
 
-    todoPreviews.value = Object.fromEntries(previews);
+    if (sequence === loadSequence) {
+      todoPreviews.value = Object.fromEntries(previews);
+      markPreviewReady(todoTools.map((tool) => tool.id), sequence);
+    }
   } catch (err) {
     console.error('Error loading todo previews:', err);
+    markPreviewReady(todoTools.map((tool) => tool.id), sequence);
   }
 }
 
@@ -176,12 +234,12 @@ function getTodoPreviewItems(toolId: string) {
   return todoPreviews.value[toolId] || [];
 }
 
-async function loadDocsPreviews() {
-  try {
-    const docsTools = activeTools.value.filter(tool => tool.tool_type === 'docs');
+async function loadDocsPreviews(sequence = loadSequence) {
+  const docsTools = activeTools.value.filter(tool => tool.tool_type === 'docs');
 
+  try {
     if (docsTools.length === 0) {
-      docsPreviews.value = {};
+      if (sequence === loadSequence) docsPreviews.value = {};
       return;
     }
 
@@ -196,9 +254,13 @@ async function loadDocsPreviews() {
       })
     );
 
-    docsPreviews.value = Object.fromEntries(previews);
+    if (sequence === loadSequence) {
+      docsPreviews.value = Object.fromEntries(previews);
+      markPreviewReady(docsTools.map((tool) => tool.id), sequence);
+    }
   } catch (err) {
     console.error('Error loading docs previews:', err);
+    markPreviewReady(docsTools.map((tool) => tool.id), sequence);
   }
 }
 
@@ -258,12 +320,12 @@ function buildCalendarPreviewDays(eventDates = new Set<string>()) {
   return days;
 }
 
-async function loadCalendarPreviews() {
-  try {
-    const scheduleTools = activeTools.value.filter(tool => tool.tool_type === 'schedule');
+async function loadCalendarPreviews(sequence = loadSequence) {
+  const scheduleTools = activeTools.value.filter(tool => tool.tool_type === 'schedule');
 
+  try {
     if (scheduleTools.length === 0) {
-      calendarPreviews.value = {};
+      if (sequence === loadSequence) calendarPreviews.value = {};
       return;
     }
 
@@ -280,9 +342,13 @@ async function loadCalendarPreviews() {
       })
     );
 
-    calendarPreviews.value = Object.fromEntries(previews);
+    if (sequence === loadSequence) {
+      calendarPreviews.value = Object.fromEntries(previews);
+      markPreviewReady(scheduleTools.map((tool) => tool.id), sequence);
+    }
   } catch (err) {
     console.error('Error loading calendar previews:', err);
+    markPreviewReady(scheduleTools.map((tool) => tool.id), sequence);
   }
 }
 
@@ -303,12 +369,12 @@ const calendarPreviewMonthLabel = computed(() => {
   return new Date().toLocaleDateString('en-US', { month: 'long' });
 });
 
-async function loadBoardPreviews() {
-  try {
-    const boardTools = activeTools.value.filter(tool => tool.tool_type === 'board');
+async function loadBoardPreviews(sequence = loadSequence) {
+  const boardTools = activeTools.value.filter(tool => tool.tool_type === 'board');
 
+  try {
     if (boardTools.length === 0) {
-      boardPreviews.value = {};
+      if (sequence === loadSequence) boardPreviews.value = {};
       return;
     }
 
@@ -324,9 +390,13 @@ async function loadBoardPreviews() {
       })
     );
 
-    boardPreviews.value = Object.fromEntries(previews);
+    if (sequence === loadSequence) {
+      boardPreviews.value = Object.fromEntries(previews);
+      markPreviewReady(boardTools.map((tool) => tool.id), sequence);
+    }
   } catch (err) {
     console.error('Error loading board previews:', err);
+    markPreviewReady(boardTools.map((tool) => tool.id), sequence);
   }
 }
 
@@ -342,12 +412,12 @@ function getBoardPreviewAuthor(post: BoardPreviewPost) {
   return post.expand?.created_by?.name || post.expand?.created_by?.email?.split('@')[0] || 'Unknown';
 }
 
-async function loadTaskPreviews() {
-  try {
-    const taskTools = activeTools.value.filter(tool => tool.tool_type === 'tasks');
+async function loadTaskPreviews(sequence = loadSequence) {
+  const taskTools = activeTools.value.filter(tool => tool.tool_type === 'tasks');
 
+  try {
     if (taskTools.length === 0) {
-      taskPreviews.value = {};
+      if (sequence === loadSequence) taskPreviews.value = {};
       return;
     }
 
@@ -379,9 +449,13 @@ async function loadTaskPreviews() {
       })
     );
 
-    taskPreviews.value = Object.fromEntries(previews);
+    if (sequence === loadSequence) {
+      taskPreviews.value = Object.fromEntries(previews);
+      markPreviewReady(taskTools.map((tool) => tool.id), sequence);
+    }
   } catch (err) {
     console.error('Error loading task previews:', err);
+    markPreviewReady(taskTools.map((tool) => tool.id), sequence);
   }
 }
 
@@ -458,7 +532,7 @@ function hasPreviewItems(tool: any) {
                   <NuxtLink
                     :to="`/${outpost.id}/projects/${project.id}/${getToolRoute(tool.tool_type)}`"
                     class="group flex w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-transparent p-6 hover:border-gray-200"
-                    :class="hasTileTitle(tool.tool_type) && !hasPreviewItems(tool) ? 'items-center justify-center' : 'justify-between'"
+                    :class="hasTileTitle(tool.tool_type) && isToolPreviewReady(tool) && !hasPreviewItems(tool) ? 'items-center justify-center' : 'justify-between'"
                     :style="{ aspectRatio: hasTileTitle(tool.tool_type) ? '1 / 0.86' : '1 / 1' }"
                   >
                     <div v-if="!hasTileTitle(tool.tool_type)" class="tool-icon-wrapper">
@@ -466,12 +540,16 @@ function hasPreviewItems(tool: any) {
                     </div>
                     <div :class="[
                       hasTileTitle(tool.tool_type) ? 'space-y-2' : '',
-                      hasTileTitle(tool.tool_type) && !hasPreviewItems(tool) ? 'flex h-full items-center justify-center' : ''
+                      hasTileTitle(tool.tool_type) && isToolPreviewReady(tool) && !hasPreviewItems(tool) ? 'flex h-full items-center justify-center' : '',
+                      isToolPreviewReady(tool) ? 'preview-content-ready' : ''
                     ]">
                       <h3 v-if="!hasTileTitle(tool.tool_type)" class="text-lg font-semibold text-gray-900 mb-2">
                         {{ tool.name }}
                       </h3>
-                      <template v-if="tool.tool_type === 'chat'">
+                      <template v-if="hasTileTitle(tool.tool_type) && !isToolPreviewReady(tool)">
+                        <div class="preview-placeholder"></div>
+                      </template>
+                      <template v-else-if="tool.tool_type === 'chat'">
                       <div
                         v-for="message in getChatPreviewMessages(tool.id)"
                         :key="message.id"
@@ -655,6 +733,14 @@ ion-content.project-paper-page {
   flex-shrink: 0;
 }
 
+.preview-placeholder {
+  min-height: 2rem;
+}
+
+.preview-content-ready {
+  animation: preview-fade-in 180ms ease-out both;
+}
+
 .task-preview-strip {
   display: flex;
   gap: 0.5rem;
@@ -692,5 +778,17 @@ ion-content.project-paper-page {
   font-weight: 600;
   line-height: 1rem;
   color: #4b5563;
+}
+
+@keyframes preview-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
