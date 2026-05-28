@@ -186,7 +186,7 @@ async function createComment() {
     newComment.value = '';
     await fetchComments();
   } catch (err) {
-    console.error('Error posting comment:', err);
+    console.error('Error posting comment:', err, (err as any)?.response);
     error.value = 'Failed to post comment.';
   } finally {
     isPosting.value = false;
