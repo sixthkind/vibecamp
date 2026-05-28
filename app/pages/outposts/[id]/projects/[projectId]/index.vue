@@ -50,10 +50,8 @@ onMounted(() => {
     <ion-content class="project-paper-page">
       <CommonContainer>
         <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-xl px-6 py-8 sm:px-8">
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner></ion-spinner>
-            <p class="mt-4 text-gray-600">Loading project...</p>
-          </div>
+
+          <template v-if="loading"></template>
 
           <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {{ error }}

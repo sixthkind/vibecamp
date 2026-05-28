@@ -55,6 +55,7 @@ async function loadData() {
     console.error('Error loading data:', err);
     error.value = 'Failed to load members';
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -140,7 +141,8 @@ onMounted(() => {
         :outpost-id="outpostId"
         :project-id="projectId"
       >
-        <div class="max-w-4xl mx-auto py-8 px-4">
+        <template v-if="loading"></template>
+        <div v-else class="content-pop-in max-w-4xl mx-auto py-8 px-4">
           <div class="mb-8">
             <NuxtLink :to="`/${route.params.id}/projects/${route.params.projectId}`" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4">
               <span>←</span> Back to Project
@@ -149,7 +151,7 @@ onMounted(() => {
               <div>
                 <h1 class="text-3xl font-bold">Project Members</h1>
                 <p class="text-gray-600 mt-2">
-                  {{ project?.name || 'Loading...' }}
+                  {{ project?.name || '' }}
                 </p>
                 <p class="text-sm text-gray-500 mt-1">
                   All members of the outpost can access this project
@@ -171,11 +173,6 @@ onMounted(() => {
 
           <div v-if="success" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
             {{ success }}
-          </div>
-
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner></ion-spinner>
-            <p class="mt-4 text-gray-600">Loading members...</p>
           </div>
 
           <div v-else class="bg-white border rounded-lg overflow-hidden">

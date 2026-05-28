@@ -49,6 +49,7 @@ async function loadData() {
       error.value = 'Failed to load chat';
     }
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -61,12 +62,14 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <div v-if="loading" class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading chat...</p>
-        </div>
-      </div>
+
+      <CommonProjectPaperStack
+        v-if="loading"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        full-height
+      />
 
       <div v-else-if="error" class="flex items-center justify-center h-full pt-4">
         <div class="max-w-md text-center">
@@ -87,7 +90,7 @@ onMounted(() => {
         :project-id="projectId"
         full-height
       >
-        <div class="h-full min-h-0">
+        <div class="content-pop-in h-full min-h-0">
           <ChatContainer
             :projectToolId="chatTool.id"
             :chatName="chatTool.name"

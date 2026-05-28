@@ -60,6 +60,7 @@ async function loadData() {
       error.value = 'Failed to load item';
     }
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -181,12 +182,15 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <div v-if="loading" class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading...</p>
-        </div>
-      </div>
+
+      <CommonProjectObjectPaperStack
+        v-if="loading"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Docs & Files"
+        :parent-path="`/${outpostId}/projects/${projectId}/docs`"
+      />
 
       <div v-else-if="error" class="flex items-center justify-center h-full p-4">
         <div class="max-w-md text-center">
@@ -208,7 +212,7 @@ onMounted(() => {
         parent-title="Docs & Files"
         :parent-path="`/${outpostId}/projects/${projectId}/docs`"
       >
-        <div class="px-6 py-8">
+        <div class="content-pop-in px-6 py-8">
           <!-- Action Buttons at Top -->
           <div class="flex justify-end gap-2 mb-4">
             <button

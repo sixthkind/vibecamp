@@ -14,23 +14,12 @@
           <span>Load More Messages</span>
         </button>
       </div>
-
-      <!-- Loading Spinner -->
-      <div v-if="isLoadingMore" class="loader-container">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-      </div>
-
       <!-- Empty State -->
       <div v-if="messages.length === 0 && !isLoading" class="empty-state">
         <Icon name="lucide:message-square" size="48px" class="text-gray-300" />
         <p class="text-gray-500 mt-3">No messages yet. Start the conversation!</p>
       </div>
-
-      <!-- Loading State -->
-      <div v-if="isLoading" class="loader-container">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <p class="text-gray-500 mt-3">Loading messages...</p>
-      </div>
+        <div v-if="isLoading"></div>
 
       <!-- Messages -->
       <div v-for="message in messages" :key="message.id">

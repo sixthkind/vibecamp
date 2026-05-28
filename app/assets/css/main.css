@@ -49,6 +49,27 @@
   animation-name: fadeIn;
 }
 
+@keyframes contentPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-pop-in {
+  animation: contentPopIn 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-pop-in {
+    animation-duration: 1ms !important;
+  }
+}
 
 @keyframes fadeInDown {
   from {

@@ -64,6 +64,7 @@ async function loadData() {
       error.value = 'Failed to load project tools';
     }
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -195,18 +196,14 @@ function goBack() {
         :outpost-id="outpostId"
         :project-id="projectId"
       >
-        <div class="max-w-4xl mx-auto py-8 px-4">
+        <template v-if="loading"></template>
+        <div v-else class="content-pop-in max-w-4xl mx-auto py-8 px-4">
           <div class="mb-8">
             <h1 class="text-2xl font-bold mb-2">Project Tools</h1>
-            <p class="text-gray-600">{{ project?.name || 'Loading...' }}</p>
+            <p class="text-gray-600">{{ project?.name || '' }}</p>
           </div>
 
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner name="crescent" color="primary"></ion-spinner>
-            <p class="text-gray-500 mt-4">Loading tools...</p>
-          </div>
-
-          <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {{ error }}
           </div>
 

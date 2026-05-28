@@ -70,6 +70,7 @@ async function loadData() {
     console.error('Error loading project admin:', err);
     error.value = 'Failed to load project admin';
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -82,12 +83,13 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content>
-      <div v-if="loading" class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <ion-spinner></ion-spinner>
-          <p class="mt-4 text-gray-600">Loading project admin...</p>
-        </div>
-      </div>
+
+      <CommonProjectPaperStack
+        v-if="loading"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+      />
 
       <div v-else-if="error" class="flex items-center justify-center h-full p-4">
         <div class="max-w-md p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -101,7 +103,7 @@ onMounted(() => {
         :outpost-id="outpostId"
         :project-id="projectId"
       >
-        <div class="max-w-3xl mx-auto px-6 py-8">
+        <div class="content-pop-in max-w-3xl mx-auto px-6 py-8">
           <h1 class="text-2xl font-semibold text-gray-900 mb-6">Project admin</h1>
 
           <div v-if="adminLinks.length > 0" class="divide-y divide-gray-200 border-y border-gray-200">

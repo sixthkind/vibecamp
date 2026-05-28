@@ -75,8 +75,7 @@
             :disabled="loading"
             class="w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
           >
-            <span v-if="loading">Authorizing...</span>
-            <span v-else>Allow Access</span>
+            <span>Allow Access</span>
           </button>
           
           <button
@@ -90,16 +89,8 @@
       </div>
 
       <!-- Not Authenticated - Redirecting to Login -->
-      <div v-else-if="!isAuthenticated && isValidRequest" class="text-center py-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Redirecting to login...</p>
-      </div>
-
-      <!-- Loading State -->
-      <div v-else-if="!error && !isValidRequest" class="text-center py-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Loading...</p>
-      </div>
+      <div v-else-if="!isAuthenticated && isValidRequest"></div>
+      <div v-else-if="!error && !isValidRequest"></div>
     </div>
   </div>
 </template>
@@ -136,7 +127,7 @@ const isAuthenticated = computed(() => pb.authStore.isValid);
 const userRecord = computed(() => pb.authStore.record);
 
 // Client info from database
-const clientName = ref('Loading...');
+const clientName = ref('');
 
 // Fetch client name from secure API endpoint
 async function fetchClientInfo() {
@@ -270,4 +261,3 @@ function handleDeny() {
   window.location.href = errorUrl;
 }
 </script>
-

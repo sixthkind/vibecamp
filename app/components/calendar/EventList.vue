@@ -8,13 +8,8 @@
         {{ isToday ? 'Today' : isYesterday ? 'Yesterday' : isTomorrow ? 'Tomorrow' : '' }}
       </p>
     </div>
-
-    <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center py-8">
-      <ion-spinner name="crescent" color="primary"></ion-spinner>
-    </div>
-
     <!-- Empty State -->
+    <template v-if="loading"></template>
     <div v-else-if="events.length === 0" class="text-center py-8">
       <Icon name="lucide:calendar-x" size="48px" class="text-gray-300 mx-auto mb-3" />
       <p class="text-gray-500 text-sm">No events or to-dos for this day</p>

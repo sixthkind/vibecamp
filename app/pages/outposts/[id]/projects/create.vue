@@ -137,7 +137,7 @@ onMounted(() => {
             </NuxtLink>
             <h1 class="text-3xl font-bold">Create New Project</h1>
             <p class="text-gray-600 mt-2">
-              {{ outpost?.name || 'Loading...' }}
+              {{ outpost?.name || '' }}
             </p>
           </div>
 

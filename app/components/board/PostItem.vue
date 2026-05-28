@@ -1,12 +1,12 @@
 <template>
   <div
     @click="$emit('click')"
-    class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group"
+    class="bg-white border border-gray-200 rounded-lg p-6 cursor-pointer"
   >
     <!-- Post Header -->
     <div class="flex items-start justify-between mb-3">
       <div class="flex-1">
-        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-1">
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">
           {{ post.title }}
         </h3>
         <div class="flex items-center gap-4 text-sm text-gray-600">
@@ -26,7 +26,7 @@
         <Icon 
           name="lucide:chevron-right" 
           size="20px" 
-          class="text-gray-400 group-hover:text-blue-600 transition-colors"
+          class="text-gray-400"
         />
       </div>
     </div>

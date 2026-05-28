@@ -78,13 +78,8 @@ onMounted(() => {
 
           <!-- Dashboard with Projects -->
           <div v-else>
-            <!-- Loading State -->
-            <div v-if="loading" class="text-center py-12">
-              <ion-spinner></ion-spinner>
-              <p class="mt-4 text-gray-600">Loading projects...</p>
-            </div>
-
             <!-- No Projects State -->
+            <template v-if="loading"></template>
             <div v-else-if="projects.length === 0" class="text-center py-20">
               <div class="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

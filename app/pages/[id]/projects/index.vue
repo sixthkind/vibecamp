@@ -57,7 +57,7 @@ onMounted(() => {
               <div>
                 <h1 class="text-3xl font-bold">Projects</h1>
                 <p class="text-gray-600 mt-2">
-                  {{ outpost?.name || 'Loading...' }}
+                  {{ outpost?.name || '' }}
                 </p>
               </div>
               <NuxtLink 
@@ -72,10 +72,7 @@ onMounted(() => {
 
           </div>
 
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner></ion-spinner>
-            <p class="mt-4 text-gray-600">Loading projects...</p>
-          </div>
+          <template v-if="loading"></template>
 
           <div v-else-if="projects.length === 0" class="text-center py-12">
             <p class="text-gray-600 mb-4">No projects yet.</p>

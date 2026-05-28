@@ -93,6 +93,7 @@ async function loadData() {
     console.error('Error loading project:', err);
     error.value = 'Failed to load project';
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -356,16 +357,14 @@ function hasPreviewItems(tool: any) {
     <ion-content class="project-paper-page">
       <CommonContainer>
         <div class="project-paper max-w-6xl mx-auto min-h-screen rounded-t-xl px-6 py-8 sm:px-8">
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner></ion-spinner>
-            <p class="mt-4 text-gray-600">Loading project...</p>
-          </div>
+
+          <template v-if="loading"></template>
 
           <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {{ error }}
           </div>
 
-          <div v-else>
+          <div v-else class="content-pop-in">
             <!-- Header -->
             <div class="mb-8 text-center">
               <h1 class="text-3xl font-semibold text-gray-600">{{ project.name }}</h1>

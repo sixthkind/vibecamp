@@ -18,12 +18,7 @@
             <span>New Post</span>
           </button>
         </div>
-        
-        <!-- Loading State -->
-        <div v-if="isLoading" class="flex flex-col items-center justify-center py-16">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading posts...</p>
-        </div>
+        <div v-if="isLoading"></div>
         
         <!-- Empty State -->
         <div v-else-if="posts.length === 0" class="flex flex-col items-center justify-center py-16">

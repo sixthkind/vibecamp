@@ -17,10 +17,11 @@ const props = defineProps<{
   >
     <div class="project-paper-under mx-auto h-12 max-w-4xl rounded-t-xl px-8 pt-2.5 text-center">
       <NuxtLink
+        v-if="props.project?.name"
         :to="`/${props.outpostId}/projects/${props.projectId}`"
         class="text-sm font-medium text-gray-500 hover:text-gray-800"
       >
-        {{ props.project?.name || 'Project' }}
+        {{ props.project.name }}
       </NuxtLink>
     </div>
 

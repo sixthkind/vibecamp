@@ -99,7 +99,7 @@ onMounted(() => {
               <div>
                 <h1 class="text-3xl font-bold">Members</h1>
                 <p class="text-gray-600 mt-2">
-                  {{ outpost?.name || 'Loading...' }}
+                  {{ outpost?.name || '' }}
                 </p>
               </div>
               <button
@@ -118,11 +118,6 @@ onMounted(() => {
 
           <div v-if="success" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
             {{ success }}
-          </div>
-
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner></ion-spinner>
-            <p class="mt-4 text-gray-600">Loading members...</p>
           </div>
 
           <div v-else class="bg-white border rounded-lg overflow-hidden">

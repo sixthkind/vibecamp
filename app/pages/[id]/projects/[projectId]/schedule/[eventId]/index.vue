@@ -122,6 +122,7 @@ async function loadData() {
       error.value = 'Failed to load event';
     }
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -185,13 +186,15 @@ function getAvatarUrl(user: any): string {
 <template>
   <ion-page>
     <ion-content>
-      <!-- Loading State -->
-      <div v-if="loading" class="text-center py-12">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <p class="text-gray-500 mt-4">Loading event...</p>
-      </div>
+      <CommonProjectObjectPaperStack
+        v-if="loading"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Schedule"
+        :parent-path="`/${outpostId}/projects/${projectId}/schedule`"
+      />
 
-      <!-- Error State -->
       <div v-else-if="error" class="mx-auto max-w-3xl p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
         {{ error }}
       </div>
@@ -204,7 +207,7 @@ function getAvatarUrl(user: any): string {
         parent-title="Schedule"
         :parent-path="`/${outpostId}/projects/${projectId}/schedule`"
       >
-        <div class="mx-auto max-w-3xl px-6 py-8">
+        <div class="content-pop-in mx-auto max-w-3xl px-6 py-8">
           <!-- Event Details -->
           <div class="space-y-6">
             <!-- Header -->

@@ -47,10 +47,7 @@ onMounted(() => {
             </NuxtLink>
           </div>
 
-          <div v-if="loading" class="text-center py-12">
-            <ion-spinner></ion-spinner>
-            <p class="mt-4 text-gray-600">Loading your outposts...</p>
-          </div>
+          <template v-if="loading"></template>
 
           <div v-else-if="outposts.length === 0" class="text-center py-12">
             <p class="text-gray-600 mb-4">You don't belong to any outposts yet.</p>

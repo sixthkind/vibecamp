@@ -47,6 +47,7 @@ async function loadData() {
       error.value = 'Failed to load post';
     }
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -118,12 +119,15 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <div v-if="loading" class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading post...</p>
-        </div>
-      </div>
+
+      <CommonProjectObjectPaperStack
+        v-if="loading"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+        parent-title="Board"
+        :parent-path="`/${outpostId}/projects/${projectId}/board`"
+      />
 
       <div v-else-if="error" class="flex items-center justify-center h-full p-4">
         <div class="max-w-md text-center">
@@ -145,7 +149,7 @@ onMounted(() => {
         parent-title="Board"
         :parent-path="`/${outpostId}/projects/${projectId}/board`"
       >
-        <div class="px-6 py-8">
+        <div class="content-pop-in px-6 py-8">
           <!-- Action Buttons -->
           <div class="flex justify-end gap-2 mb-4">
             <button
@@ -159,7 +163,7 @@ onMounted(() => {
           </div>
 
           <!-- Post Content -->
-          <div class="bg-white rounded-lg border border-gray-200 p-8 mb-6">
+          <div class="bg-white p-8 mb-6">
             <!-- Post Header -->
             <div class="mb-6 pb-6 border-b border-gray-200">
               <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ post.title }}</h1>

@@ -49,6 +49,7 @@ async function loadData() {
       error.value = 'Failed to load schedule';
     }
   } finally {
+    await temporaryLoadingDelay();
     loading.value = false;
   }
 }
@@ -61,12 +62,13 @@ onMounted(() => {
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <div v-if="loading" class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-gray-500 mt-4">Loading schedule...</p>
-        </div>
-      </div>
+
+      <CommonProjectPaperStack
+        v-if="loading"
+        :project="project"
+        :outpost-id="outpostId"
+        :project-id="projectId"
+      />
 
       <div v-else-if="error" class="flex items-center justify-center h-full p-4">
         <div class="max-w-md text-center">
@@ -86,7 +88,7 @@ onMounted(() => {
         :outpost-id="outpostId"
         :project-id="projectId"
       >
-        <div class="min-h-screen">
+        <div class="content-pop-in min-h-screen">
           <CalendarContainer
             :projectToolId="scheduleTool.id"
             :projectId="projectId"
